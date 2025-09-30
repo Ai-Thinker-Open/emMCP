@@ -43,16 +43,29 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 
 )
 
+file(GLOB_RECURSE SRC_FILES "../../port/*.c" 
+"../../uart-mcp/*.c"
+"../../uart-mcp/components/*.c"
+"../../uart-mcp/components/cJSON/*.c"
+"../../uart-mcp/components/ringbuffer/*.c"
+)
+
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
     App/Src/log.c
+    # ../../port/uartPort.c
+    ${SRC_FILES}
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
     App/Inc
+    ../../port
+    ../../uart-mcp
+    ../../uart-mcp/components/cJSON
+    ../../uart-mcp/components/ringbuffer
 )
 
 # Add project symbols (macros)
@@ -71,3 +84,4 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     # Add user defined libraries
 
 )
+
