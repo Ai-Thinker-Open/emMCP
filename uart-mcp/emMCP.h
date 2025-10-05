@@ -103,6 +103,7 @@ typedef struct
 {
     char* emMCPVersion;
 	mcp_param_t* tools_root;
+	mcp_param_t* tools_arry;
 	char tools_str[1024];
 }emMCP_t;
 

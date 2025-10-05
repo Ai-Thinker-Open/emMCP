@@ -18,16 +18,22 @@
 emMCP_tool_t mcp_tool_arry[MCP_SERVER_TOOL_NUMBLE_MAX] = {0};
 static char *mcp_sever_type_str[MCP_SERVER_TOOL_TYPE_MAX] = {"false", "true", "null", "number", "string", "array", "object", "text", "boolean"};
 static returnValues_t ret = {0};
-
+static mcp_param_t* root;
 emMCP_LogLevel log_level;
 int emMCP_init(emMCP_t* emMCP)
 {
     if (emMCP == NULL)
     {
-		emMCP_LOGE("emMCP_init: emMCP is NULL");
+		emMCP_log_error("emMCP_init: emMCP is NULL");
         return -1;
     }
-	
+	//初始化emMCP
+	root= cJSON_CreateObject();
+	if(emMCP->tools_root==NULL)
+	{
+		emMCP->tools_root=root;
+		emMCP->tools_arry=cJSON_CreateArray();
+	}
     return 0;
 }
 int emMCP_add_tool_to_toolList(void *toolsList, emMCP_tool_t *tool)
@@ -49,6 +55,7 @@ int emMCP_add_tool_to_toolList(void *toolsList, emMCP_tool_t *tool)
 		for (int i = 0; i < MCP_SERVER_TOOL_NUMBLE_MAX; i++)
 		{
 			if (mcp_tool_arry[i].name == NULL)
+
 			{
 				memcpy(&mcp_tool_arry[i], tmp_tool, sizeof(emMCP_tool_t));
 				break;
