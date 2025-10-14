@@ -11,9 +11,10 @@
 
 #ifndef __UART_PORT_H__
 #define __UART_PORT_H__
+#include "log.h"
 
-#define emMCP_PRINTF 
+#define emMCP_PRINTF log_printf
 
-int uartPortSendData(char* data, int len);
+int uartPortSendData(char *data, int len);
 int uartPortRecvData(char ch);
 #endif // __UART_PORT_H__

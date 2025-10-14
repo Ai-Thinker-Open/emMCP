@@ -1,18 +1,19 @@
 /**
  * @file emMCPLOG.h
  * @author Seahi-Mo (seahi-mo@foxmail.com)
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2025-09-30
- * 
+ *
  * @copyright Ai-Thinker co.,ltd (c) 2025
- * 
+ *
  */
 
 #ifndef _EM_MCP_LOG_H_
 #define _EM_MCP_LOG_H_
-#include <uartPort.h>
 
+#include <uartPort.h>
+#ifdef emMCP_PRINTF
 #define ANSI_COLOR_RESET "\033[0m"
 #define ANSI_COLOR_GREEN "\033[32m"
 #define ANSI_COLOR_RED "\033[31m"
@@ -22,7 +23,8 @@
 #define ANSI_COLOR_CYAN "\033[36m"
 
 // 日志级别枚举
-typedef enum {
+typedef enum
+{
   emMCP_LOG_LEVEL_DEBUG,
   emMCP_LOG_LEVEL_INFO,
   emMCP_LOG_LEVEL_WARN,
@@ -32,49 +34,65 @@ typedef enum {
 
 extern emMCP_LogLevel log_level;
 // 日志输出宏定义
-#define emMCP_log_debug(...)                                                         \
-  do {                                                                         \
-    if (log_level <=  emMCP_LOG_LEVEL_DEBUG) {                                      \
-      emMCP_PRINTF(ANSI_COLOR_BLUE "[DEBUG] %s:%d: ", __func__, __LINE__);       \
-      emMCP_PRINTF(__VA_ARGS__);                                                 \
-      emMCP_PRINTF(ANSI_COLOR_RESET "\r\n");                                     \
-    }                                                                          \
+#define emMCP_log_debug(...)                                               \
+  do                                                                       \
+  {                                                                        \
+    if (log_level <= emMCP_LOG_LEVEL_DEBUG)                                \
+    {                                                                      \
+      emMCP_PRINTF(ANSI_COLOR_BLUE "[DEBUG] %s:%d: ", __func__, __LINE__); \
+      emMCP_PRINTF(__VA_ARGS__);                                           \
+      emMCP_PRINTF(ANSI_COLOR_RESET "\r\n");                               \
+    }                                                                      \
   } while (0)
 
-#define emMCP_log_info(...)                                                          \
-  do {                                                                         \
-    if (log_level <=  emMCP_LOG_LEVEL_INFO) {                                       \
-      emMCP_PRINTF(ANSI_COLOR_GREEN "[INFO] %s:%d: ", __func__, __LINE__);       \
-      emMCP_PRINTF(__VA_ARGS__);                                                 \
-      emMCP_PRINTF(ANSI_COLOR_RESET "\r\n");                                     \
-    }                                                                          \
+#define emMCP_log_info(...)                                                \
+  do                                                                       \
+  {                                                                        \
+    if (log_level <= emMCP_LOG_LEVEL_INFO)                                 \
+    {                                                                      \
+      emMCP_PRINTF(ANSI_COLOR_GREEN "[INFO] %s:%d: ", __func__, __LINE__); \
+      emMCP_PRINTF(__VA_ARGS__);                                           \
+      emMCP_PRINTF(ANSI_COLOR_RESET "\r\n");                               \
+    }                                                                      \
   } while (0)
 
-#define emMCP_log_warn(...)                                                          \
-  do {                                                                         \
-    if (log_level <=  emMCP_LOG_LEVEL_WARN) {                                       \
-      emMCP_PRINTF(ANSI_COLOR_YELLOW "[WARN] %s:%d: ", __func__, __LINE__);      \
-      emMCP_PRINTF(__VA_ARGS__);                                                 \
-      emMCP_PRINTF(ANSI_COLOR_RESET "\r\n");                                     \
-    }                                                                          \
+#define emMCP_log_warn(...)                                                 \
+  do                                                                        \
+  {                                                                         \
+    if (log_level <= emMCP_LOG_LEVEL_WARN)                                  \
+    {                                                                       \
+      emMCP_PRINTF(ANSI_COLOR_YELLOW "[WARN] %s:%d: ", __func__, __LINE__); \
+      emMCP_PRINTF(__VA_ARGS__);                                            \
+      emMCP_PRINTF(ANSI_COLOR_RESET "\r\n");                                \
+    }                                                                       \
   } while (0)
 
-#define emMCP_log_error(...)                                                         \
-  do {                                                                         \
-    if (log_level <=  emMCP_LOG_LEVEL_ERROR) {                                      \
-      emMCP_PRINTF(ANSI_COLOR_RED "[ERROR] %s:%d: ", __func__, __LINE__);        \
-      emMCP_PRINTF(__VA_ARGS__);                                                 \
-      emMCP_PRINTF(ANSI_COLOR_RESET "\r\n");                                     \
-    }                                                                          \
+#define emMCP_log_error(...)                                              \
+  do                                                                      \
+  {                                                                       \
+    if (log_level <= emMCP_LOG_LEVEL_ERROR)                               \
+    {                                                                     \
+      emMCP_PRINTF(ANSI_COLOR_RED "[ERROR] %s:%d: ", __func__, __LINE__); \
+      emMCP_PRINTF(__VA_ARGS__);                                          \
+      emMCP_PRINTF(ANSI_COLOR_RESET "\r\n");                              \
+    }                                                                     \
   } while (0)
 
-#define emMCP_log_fatal(...)                                                         \
-  do {                                                                         \
-    if (log_level <=  emMCP_LOG_LEVEL_FATAL) {                                      \
-      emMCP_PRINTF(ANSI_COLOR_MAGENTA "[FATAL] %s:%d: ", __func__, __LINE__);    \
-      emMCP_PRINTF(__VA_ARGS__);                                                 \
-      emMCP_PRINTF(ANSI_COLOR_RESET "\r\n");                                     \
-    }                                                                          \
+#define emMCP_log_fatal(...)                                                  \
+  do                                                                          \
+  {                                                                           \
+    if (log_level <= emMCP_LOG_LEVEL_FATAL)                                   \
+    {                                                                         \
+      emMCP_PRINTF(ANSI_COLOR_MAGENTA "[FATAL] %s:%d: ", __func__, __LINE__); \
+      emMCP_PRINTF(__VA_ARGS__);                                              \
+      emMCP_PRINTF(ANSI_COLOR_RESET "\r\n");                                  \
+    }                                                                         \
   } while (0)
-
+#else
+#define emMCP_log_debug(...)
+#define emMCP_log_info(...)
+#define emMCP_log_warn(...)
+#define emMCP_log_error(...)
+#define emMCP_log_fatal(...)
 #endif // _EM_MCP_LOG_H_
+#endif // !__EM_MCP_LOG_H__

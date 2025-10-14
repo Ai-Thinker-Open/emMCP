@@ -1,12 +1,12 @@
 /**
  * @file emMCP.h
  * @author Seahi-Mo (seahi-mo@foxmail.com)
- * @brief 
+ * @brief
  * @version 0.1
  * @date 2025-09-30
- * 
+ *
  * @copyright Ai-Thinker co.,ltd (c) 2025
- * 
+ *
  */
 #ifndef __EM_MCP_H__
 #define __EM_MCP_H__
@@ -17,7 +17,6 @@
 #define MCP_SERVER_TOOL_PROPERTIES_NUM 5		 // 属性数量
 #define MCP_SERVER_TOOL_METHODS_NUM 5			 // 方法数量
 #define MCP_SERVER_TOOL_METHODS_PARAMETERS_NUM 5 // 方法参数数量
-
 
 /**
  * @brief MCP 服务器工具类型枚举
@@ -37,7 +36,6 @@ typedef enum
 	MCP_SERVER_TOOL_TYPE_MAX,
 } mcp_server_tool_type_t;
 
-typedef cJSON *mcp_param_t;
 /**
  * @brief 属性结构体
  *
@@ -48,8 +46,6 @@ typedef struct
 	char *description;			 // 属性描述
 	mcp_server_tool_type_t type; // 属性类型
 } properties_t;
-
-
 
 typedef struct
 {
@@ -88,7 +84,7 @@ typedef struct
 } returnValues_t;
 /**
  * @brief MCP 服务器工具结构体
- * 
+ *
  */
 typedef struct
 {
@@ -101,11 +97,40 @@ typedef struct
 
 typedef struct
 {
-    char* emMCPVersion;
-	mcp_param_t* tools_root;
-	mcp_param_t* tools_arry;
+	char *emMCPVersion;
+	cJSON *tools_root;
+	cJSON *tools_arry;
 	char tools_str[1024];
-}emMCP_t;
-
-int emMCP_init(emMCP_t* emMCP);
+} emMCP_t;
+/**
+ * @brief 初始化MCP服务器
+ *
+ * @param emMCP
+ * @return int
+ */
+int emMCP_init(emMCP_t *emMCP);
+/**
+ * @brief 添加工具到工具列表
+ *
+ * @param toolsList
+ * @param tool
+ * @return int
+ */
+int emMCP_add_tool_to_toolList(void *toolsList, emMCP_tool_t *tool);
+/**
+ * @brief 添加UART工具到工具列表
+ *
+ * @param toolsList
+ * @param tool
+ * @return int
+ */
+int mcp_server_add_uart_tool_to_toolList(void *toolsList, cJSON *tool);
+/**
+ * @brief MCP 服务器响应工具请求
+ *
+ * @param tool_name
+ * @param arguments
+ * @return returnValues_t
+ */
+returnValues_t mcp_server_responsive_tool_request(char *tool_name, cJSON *arguments);
 #endif // !__EM_MCP_H__

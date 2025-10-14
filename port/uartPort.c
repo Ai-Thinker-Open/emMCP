@@ -11,30 +11,40 @@
 #include "uartPort.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include <string.h>
 #include "ringbuffer.h"
+
+/* Private includes ----------------------------------------------------------*/
+#include "usart.h"
 /**
  * @brief 串口发送函数接口
- * 
- * @param data 
- * @param len 
- * @return int 
+ *
+ * @param data
+ * @param len
+ * @return int
  */
-int uartPortSendData(char* data, int len)
+int uartPortSendData(char *data, int len)
 {
-	// 在此处实现串口发送函数
-    
+    // 在此处实现串口发送函数
+    if (data == NULL || len <= 0)
+    {
+        return -1;
+    }
+    // TODO: 实现串口发送函数
+    // 例如：HAL_UART_Transmit(&huart1, (uint8_t *)data, len, 1000);
+    HAL_UART_Transmit(&huart2, (uint8_t *)data, len, 1000);
     return 0;
 }
 /**
  * @brief 串口接收函数接口,把这个函数在串口接收中断或接收循环中调用
- *        
- * @param data 
- * @param len 
- * @return int 
+ *
+ * @param data
+ * @param len
+ * @return int
  */
 int uartPortRecvData(char ch)
 {
-	
+
     return 0;
 }
