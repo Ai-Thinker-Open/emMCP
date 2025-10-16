@@ -1,2 +1,6 @@
 # Prerequisites
 .vscode
+/*/build
+/*/*.cfg
+/*/.vscode
+/*/.settings

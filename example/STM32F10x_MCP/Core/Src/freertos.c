@@ -19,13 +19,15 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "FreeRTOS.h"
-#include "cmsis_os.h"
-#include "main.h"
 #include "task.h"
+#include "main.h"
+#include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "log.h"
+#include "emMCP.h"
+#include "user_mcp.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -55,11 +57,18 @@ const osThreadAttr_t defaultTask_attributes = {
     .priority = (osPriority_t)osPriorityNormal,
 };
 /* Definitions for LED_Blank */
-osThreadId_t LED_BlankTaskHandle;
+osThreadId_t LED_BlankHandle;
 const osThreadAttr_t LED_Blank_attributes = {
     .name = "LED_Blank",
-    .stack_size = 256 * 4,
+    .stack_size = 128 * 4,
     .priority = (osPriority_t)osPriorityLow,
+};
+/* Definitions for log_send_task */
+osThreadId_t log_send_taskHandle;
+const osThreadAttr_t log_send_task_attributes = {
+    .name = "log_send_task",
+    .stack_size = 256 * 4,
+    .priority = (osPriority_t)osPriorityLow1,
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -68,7 +77,8 @@ const osThreadAttr_t LED_Blank_attributes = {
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void *argument);
-void LED_BlankHandle(void *argument);
+void LED_Blank_Handle(void *argument);
+void _logSend(void *argument);
 
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
@@ -77,7 +87,8 @@ void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
  * @param  None
  * @retval None
  */
-void MX_FREERTOS_Init(void) {
+void MX_FREERTOS_Init(void)
+{
   /* USER CODE BEGIN Init */
 
   /* USER CODE END Init */
@@ -100,13 +111,18 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the thread(s) */
   /* creation of defaultTask */
-  defaultTaskHandle =
-      osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* creation of LED_Blank */
-  LED_BlankTaskHandle =
-      osThreadNew(LED_BlankHandle, NULL, &LED_Blank_attributes);
+  LED_BlankHandle = osThreadNew(LED_Blank_Handle, NULL, &LED_Blank_attributes);
 
+  /* creation of log_send_task */
+  log_send_taskHandle = osThreadNew(_logSend, NULL, &log_send_task_attributes);
+  if (log_send_taskHandle == NULL)
+  {
+    log_error("log_send_task task create failed");
+    Error_Handler();
+  }
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
@@ -123,33 +139,60 @@ void MX_FREERTOS_Init(void) {
  * @retval None
  */
 /* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void *argument) {
+void StartDefaultTask(void *argument)
+{
   /* USER CODE BEGIN StartDefaultTask */
   /* Infinite loop */
-  for (;;) {
-
-    osDelay(1);
+  for (;;)
+  {
+    osDelay(100);
   }
   /* USER CODE END StartDefaultTask */
 }
 
-/* USER CODE BEGIN Header_LED_BlankHandle */
+/* USER CODE BEGIN Header_LED_Blank_Handle */
 /**
  * @brief Function implementing the LED_Blank thread.
  * @param argument: Not used
  * @retval None
  */
-/* USER CODE END Header_LED_BlankHandle */
-void LED_BlankHandle(void *argument) {
-  /* USER CODE BEGIN LED_BlankHandle */
+/* USER CODE END Header_LED_Blank_Handle */
+void LED_Blank_Handle(void *argument)
+{
+  /* USER CODE BEGIN LED_Blank_Handle */
   /* Infinite loop */
-  for (;;) {
-    HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
-    osDelay(500);
-    HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
+  for (;;)
+  {
+    HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_1);
     osDelay(500);
   }
-  /* USER CODE END LED_BlankHandle */
+  /* USER CODE END LED_Blank_Handle */
+}
+
+/* USER CODE BEGIN Header__logSend */
+/**
+ * @brief Function implementing the log_send_task thread.
+ * @param argument: Not used
+ * @retval None
+ */
+/* USER CODE END Header__logSend */
+void _logSend(void *argument)
+{
+  /* USER CODE BEGIN _logSend */
+  /* Infinite loop */
+  log_info("log send task init");
+  user_mcp_init();
+  log_info("user mcp init success");
+  for (;;)
+  {
+    if (UART_RECV)
+    {
+      log_info("%s", uart_data_buf);
+    }
+    UART_RECV = 0;
+    osDelay(100);
+  }
+  /* USER CODE END _logSend */
 }
 
 /* Private application code --------------------------------------------------*/

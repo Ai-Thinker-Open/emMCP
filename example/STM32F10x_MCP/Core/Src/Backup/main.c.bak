@@ -19,17 +19,21 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
+#include "dma.h"
 #include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "emMCP.h"
+#include "log.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+#define USART2_RX_BUF_SIZE 512
+static uint8_t usart2_rx_buf[USART2_RX_BUF_SIZE];
+int UART_RECV = 0;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -57,6 +61,22 @@ void MX_FREERTOS_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
+{
+  if (huart->Instance == USART2)
+  {
+    // 这里可以处理接收到的数据，Size 是接收到的数据长度
+
+    uartPortRecvData(usart2_rx_buf, Size);
+    // 清空接收缓冲区
+    UART_RECV = 1;
+    // 重新启动DMA接收
+    HAL_UARTEx_ReceiveToIdle_DMA(&huart2, usart2_rx_buf, USART2_RX_BUF_SIZE);
+    __HAL_DMA_DISABLE_IT(&hdma_usart2_rx, DMA_IT_HT);
+    memset(usart2_rx_buf, 0, USART2_RX_BUF_SIZE);
+  }
+}
 
 /* USER CODE END 0 */
 
@@ -89,12 +109,14 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
-  // log_printf("Hello World!\r\n");
-  uint8_t *str = "1234\r\n";
-  HAL_UART_Transmit(&huart1, str, 6, 1000);
+  log_info("System Init Success");
+  HAL_UARTEx_ReceiveToIdle_DMA(&huart2, usart2_rx_buf, USART2_RX_BUF_SIZE);
+  __HAL_DMA_DISABLE_IT(&hdma_usart2_rx, DMA_IT_HT);
+
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -108,7 +130,8 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1) {
+  while (1)
+  {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -189,7 +212,8 @@ void Error_Handler(void)
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
-  while (1) {
+  while (1)
+  {
   }
   /* USER CODE END Error_Handler_Debug */
 }

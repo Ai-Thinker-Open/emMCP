@@ -28,12 +28,18 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 project(${CMAKE_PROJECT_NAME})
 message("Build type: " ${CMAKE_BUILD_TYPE})
 
+
 # Enable CMake support for ASM and C languages
 enable_language(C ASM)
 
 # Create an executable object type
 add_executable(${CMAKE_PROJECT_NAME})
 
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    target_compile_definitions(${PROJECT_NAME} PRIVATE DEBUG)
+elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+    target_compile_definitions(${PROJECT_NAME} PRIVATE NDEBUG)
+endif()
 # Add STM32CubeMX generated sources
 add_subdirectory(cmake/stm32cubemx)
 
@@ -43,18 +49,18 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 
 )
 
-file(GLOB_RECURSE SRC_FILES "../../port/*.c" 
+file(GLOB_RECURSE SRC_FILES 
+"App/Src/*.c"
+"../../port/*.c" 
 "../../uart-mcp/*.c"
 "../../uart-mcp/components/*.c"
 "../../uart-mcp/components/cJSON/*.c"
-"../../uart-mcp/components/ringbuffer/*.c"
+
 )
 
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
-    App/Src/log.c
-    # ../../port/uartPort.c
     ${SRC_FILES}
 )
 
@@ -65,7 +71,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ../../port
     ../../uart-mcp
     ../../uart-mcp/components/cJSON
-    ../../uart-mcp/components/ringbuffer
+
 )
 
 # Add project symbols (macros)
@@ -84,4 +90,5 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     # Add user defined libraries
 
 )
+
 

@@ -13,6 +13,7 @@
 #define _EM_MCP_LOG_H_
 
 #include <uartPort.h>
+
 #ifdef emMCP_PRINTF
 #define ANSI_COLOR_RESET "\033[0m"
 #define ANSI_COLOR_GREEN "\033[32m"

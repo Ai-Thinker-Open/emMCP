@@ -10,16 +10,88 @@
  */
 #include <stdio.h>
 #include "emMCP.h"
-#include <string.h>
-#include <string.h>
-#include <stdint.h>
-#include <emMCPLOG.h>
+#include <stddef.h>
 
+/**
+ * @brief 状态机状态枚举
+ *
+ */
+typedef enum
+{
+  STATE_INIT,    // 初始化状态
+  STATE_IDLE,    // 空闲状态
+  STATE_RUNNING, // 运行状态
+  STATE_ERROR,   // 错误状态
+  STATE_MAX      // 状态总数（用于校验）
+} emMCPStateType;
+
+/**
+ * @brief 状态机结构体
+ *
+ */
+typedef struct
+{
+  void (*on_enter)(void); // 进入状态时执行（如初始化资源）
+  void (*on_run)(void);   // 心跳触发时执行（状态核心逻辑）
+  void (*on_exit)(void);  // 退出状态时执行（如释放资源）
+} emMCPStateAction;
+/**
+ * @brief 状态机结构体
+ * 
+ */
+typedef struct
+{
+  emMCPStateType current_state;              // 当前状态
+  emMCPStateAction state_actions[STATE_MAX]; // 状态-行为映射表
+} emMCPStateMachine;
+/**
+ * @brief emMCP 工具数组，用来简单管理工具
+ *
+ */
 emMCP_tool_t mcp_tool_arry[MCP_SERVER_TOOL_NUMBLE_MAX] = {0};
+/**
+ * @brief emMCP JSON类型字符串
+ *
+ */
 static char *mcp_sever_type_str[MCP_SERVER_TOOL_TYPE_MAX] = {"false", "true", "null", "number", "string", "array", "object", "text", "boolean"};
+/**
+ * @brief emMCP 返回值
+ *
+ */
 static returnValues_t ret = {0};
-static cJSON *root;
-emMCP_LogLevel log_level;
+/**
+ * @brief emMCP 日志等级
+ *
+ */
+#ifdef DEBUG
+emMCP_LogLevel log_level = emMCP_LOG_LEVEL_DEBUG;
+#else
+emMCP_LogLevel log_level = emMCP_LOG_LEVEL_INFO;
+#endif
+/**
+ * @brief emMCP 串口数据缓存区
+ *
+ */
+char uart_data_buf[512] = {0};
+/**
+ * @brief emMCP 工具注册标志
+ *
+ */
+static emMCP_t *emMCP_dev = NULL;
+/**
+ * @brief emMCP 内存分配函数
+ *
+ */
+static cJSON_Hooks emMCP_defaultHooks = {
+    .malloc_fn = emMCP_malloc,
+    .free_fn = emMCP_free,
+};
+/**
+ * @brief emMCP 初始化
+ *
+ * @param emMCP
+ * @return int
+ */
 int emMCP_init(emMCP_t *emMCP)
 {
   if (emMCP == NULL)
@@ -27,34 +99,48 @@ int emMCP_init(emMCP_t *emMCP)
     emMCP_log_error("emMCP_init: emMCP is NULL");
     return -1;
   }
+  emMCP_dev = emMCP;
+  if (emMCP_dev->emMCPVersion == NULL)
+    emMCP_dev->emMCPVersion = emMCP_VERSION;
+
+  if (emMCP_dev->emMCP_Hooks == NULL)
+  {
+    emMCP_dev->emMCP_Hooks = &emMCP_defaultHooks;
+  }
+
+  cJSON_InitHooks(emMCP_dev->emMCP_Hooks);
   // 初始化emMCP
-  root = cJSON_CreateObject();
   if (emMCP->tools_root == NULL)
   {
-    emMCP->tools_root = root;
+    emMCP->tools_root = cJSON_CreateObject();
     emMCP->tools_arry = cJSON_CreateArray();
+    cJSON_AddItemToObject(emMCP->tools_root, "tools", emMCP->tools_arry);
   }
+  emMCP_log_info("emMCP_init: emMCP init success");
   return 0;
 }
 /**
  * @brief 添加工具到工具列表
- * 
- * @param toolsList 
- * @param tool 
- * @return int 
+ *
+ * @param toolsList
+ * @param tool
+ * @return int
  */
-int emMCP_add_tool_to_toolList(void *toolsList, emMCP_tool_t *tool)
+int emMCP_add_tool_to_toolList(emMCP_tool_t *tool)
 {
 
-  if (tool == NULL || toolsList == NULL)
+  if (tool == NULL || emMCP_dev->tools_arry == NULL)
   {
-
+    emMCP_log_error("emMCP_add_tool_to_toolList: tool or toolsList is NULL");
     return -32604;
   }
-  cJSON *json_toolsList = (cJSON *)toolsList;
+  // cJSON *json_toolsList = emMCP_dev->tools_arry;
   emMCP_tool_t *tmp_tool = tool; // 临时工具对象
+  // 添加工具对象到mcp_tool_arry
+  emMCP_log_debug("add tool: %s", tmp_tool->name);
   if (mcp_tool_arry[0].name == NULL)
   {
+    emMCP_log_debug("tools:\"%s\" add first", tmp_tool->name);
     memcpy(&mcp_tool_arry[0], tmp_tool, sizeof(emMCP_tool_t));
   }
   else
@@ -64,50 +150,100 @@ int emMCP_add_tool_to_toolList(void *toolsList, emMCP_tool_t *tool)
       if (mcp_tool_arry[i].name == NULL)
 
       {
+        emMCP_log_debug("tools:\"%s\" add %d", tmp_tool->name, i);
         memcpy(&mcp_tool_arry[i], tmp_tool, sizeof(emMCP_tool_t));
         break;
       }
     }
   }
-
+  emMCP_log_debug("tools:\"%s\" add success", tmp_tool->name);
   // 创建并添加工具对象到toolsList
   cJSON *json_tool = cJSON_CreateObject();
-  cJSON_AddItemToArray(json_toolsList, json_tool);
-  cJSON_AddStringToObject(json_tool, "name", tmp_tool->name);
+  if (json_tool == NULL)
+  {
+    emMCP_log_error("emMCP_add_tool_to_toolList: json_tool is NULL");
+    memset(mcp_tool_arry, 0, sizeof(emMCP_tool_t) * MCP_SERVER_TOOL_NUMBLE_MAX);
+    return -32604;
+  }
+  emMCP_log_debug("add tool name:\"%s\" to arry", tmp_tool->name);
+
+  cJSON_bool json_ret;
+  if (emMCP_dev != NULL && emMCP_dev->tools_arry != NULL)
+  {
+    json_ret = cJSON_AddItemToArray(emMCP_dev->tools_arry, json_tool);
+  }
+  else
+  {
+    emMCP_log_error("emMCP_add_tool_to_toolList: emMCP_dev or tools_arry is NULL");
+    memset(mcp_tool_arry, 0, sizeof(emMCP_tool_t) * MCP_SERVER_TOOL_NUMBLE_MAX);
+    cJSON_Delete(json_tool);
+    return -32604;
+  }
+  if (json_ret == false)
+  {
+    emMCP_log_error("emMCP_add_tool_to_toolList: json_toolsList add json_tool failed");
+    memset(mcp_tool_arry, 0, sizeof(emMCP_tool_t) * MCP_SERVER_TOOL_NUMBLE_MAX);
+    cJSON_Delete(json_tool);
+    return -32604;
+  }
+  emMCP_log_debug("add tool name :\"%s\" to arry %s", tmp_tool->name, emMCP_dev->tools_arry->string);
+  if (tmp_tool->name != NULL)
+  {
+    cJSON_AddStringToObject(json_tool, "name", tmp_tool->name);
+  }
+  else
+  {
+    emMCP_log_error("emMCP_add_tool_to_toolList: tool name is NULL");
+    memset(mcp_tool_arry, 0, sizeof(emMCP_tool_t) * MCP_SERVER_TOOL_NUMBLE_MAX);
+    cJSON_Delete(json_tool);
+    return -32604;
+  }
+  emMCP_log_debug("add tool name :\"%s\" to json_tool", tmp_tool->name);
   cJSON_AddStringToObject(json_tool, "description", tmp_tool->description);
+  emMCP_log_debug("add tool description :\"%s\" to json_tool", tmp_tool->description);
   // inputSchema 对象
   cJSON *inputSchema = cJSON_CreateObject();
   cJSON_AddItemToObject(json_tool, "inputSchema", inputSchema);
+  emMCP_log_debug("add tool inputSchema to json_tool");
   // 添加properties参数
   cJSON *properties = cJSON_CreateObject();
-  cJSON_AddItemToObject(inputSchema, "properties", properties);
+  uint8_t properties_cnt = 0;
   if (sizeof(tmp_tool->inputSchema.properties) / sizeof(properties_t) > 0)
   {
 
-    for (size_t i = 0; i < MCP_SERVER_TOOL_PROPERTIES_NUM; i++)
+    for (properties_cnt = 0; properties_cnt < MCP_SERVER_TOOL_PROPERTIES_NUM; properties_cnt++)
     {
-      if (tmp_tool->inputSchema.properties[i].name != NULL) // 判断是否为空
+      if (tmp_tool->inputSchema.properties[properties_cnt].name != NULL) // 判断是否为空
       {
         cJSON *prop = cJSON_CreateObject();
-        cJSON_AddStringToObject(prop, "description", tmp_tool->inputSchema.properties[i].description);
-        cJSON_AddStringToObject(prop, "type", mcp_sever_type_str[tmp_tool->inputSchema.properties[i].type]);
-        cJSON_AddItemToObject(properties, tmp_tool->inputSchema.properties[i].name, prop);
+        cJSON_AddStringToObject(prop, "description", tmp_tool->inputSchema.properties[properties_cnt].description);
+        cJSON_AddStringToObject(prop, "type", mcp_sever_type_str[tmp_tool->inputSchema.properties[properties_cnt].type]);
+        cJSON_AddItemToObject(properties, tmp_tool->inputSchema.properties[properties_cnt].name, prop);
+      }
+      else
+      {
+        break;
       }
     }
   }
+  if (properties_cnt > 0)
+    cJSON_AddItemToObject(inputSchema, "properties", properties);
+  // 添加methods参数
+
   cJSON *methods = cJSON_CreateObject();
-  cJSON_AddItemToObject(inputSchema, "methods", methods);
+
+  uint8_t methods_num = 0;
   if (sizeof(tmp_tool->inputSchema.methods) / sizeof(methods_t) > 0)
   {
-    for (size_t i = 0; i < MCP_SERVER_TOOL_METHODS_NUM; i++)
+    for (methods_num = 0; methods_num < MCP_SERVER_TOOL_METHODS_NUM; methods_num++)
     {
-      if (tmp_tool->inputSchema.methods[i].name != NULL) // 判断是否为空
+      if (tmp_tool->inputSchema.methods[methods_num].name != NULL) // 判断是否为空
       {
         cJSON *method = cJSON_CreateObject();
-        cJSON_AddItemToObject(methods, tmp_tool->inputSchema.methods[i].name, method);
-        cJSON_AddStringToObject(method, "description", tmp_tool->inputSchema.methods[i].description);
+        cJSON_AddItemToObject(methods, tmp_tool->inputSchema.methods[methods_num].name, method);
+        cJSON_AddStringToObject(method, "description", tmp_tool->inputSchema.methods[methods_num].description);
         // 添加parameters参数
-        if (sizeof(tmp_tool->inputSchema.methods[i].parameters) / sizeof(parameters_t) > 0)
+        if (sizeof(tmp_tool->inputSchema.methods[methods_num].parameters) / sizeof(parameters_t) > 0)
         {
           cJSON *parameters = cJSON_CreateObject();
           cJSON_AddItemToObject(method, "parameters", parameters);
@@ -123,34 +259,17 @@ int emMCP_add_tool_to_toolList(void *toolsList, emMCP_tool_t *tool)
           }
         }
       }
+      else
+      {
+        break;
+      }
     }
   }
-
+  if (methods_num > 0)
+    cJSON_AddItemToObject(inputSchema, "methods", methods);
   return 0;
 }
-/**
- * @brief 添加串口工具到工具列表，但不会添加到设备内部工具列表进行管理
- *
- * @param toolsList
- * @param tool
- * @return int
- */
-int mcp_server_add_uart_tool_to_toolList(void *toolsList, cJSON *tool)
-{
 
-  if (tool == NULL || toolsList == NULL)
-  {
-
-    return -32604;
-  }
-  cJSON *json_toolsList = (cJSON *)toolsList;
-  if (tool == NULL)
-  {
-    return -32604;
-  }
-  cJSON_AddItemToArray(json_toolsList, tool);
-  return 0;
-}
 /**
  * @brief Construct a new mcp server responsive tool request object
  * 		// 根据工具名称，找到对应的工具，并执行对应的请求
@@ -159,11 +278,12 @@ int mcp_server_add_uart_tool_to_toolList(void *toolsList, cJSON *tool)
  * @param arguments
  * @return returnValues_t
  */
-returnValues_t mcp_server_responsive_tool_request(char *tool_name, cJSON *arguments)
+returnValues_t emMCP_responsive_tool_request(char *tool_name, cJSON *arguments)
 {
 
   if (tool_name == NULL || arguments == NULL)
   {
+    emMCP_log_error("emMCP_responsive_tool_request: tool_name or arguments is NULL");
     ret.error_code = -32602;
     return ret;
   }
@@ -179,8 +299,9 @@ returnValues_t mcp_server_responsive_tool_request(char *tool_name, cJSON *argume
   }
   if (tools_numble == 0)
   {
-    printf("tools numble is 0\r\n");
+    emMCP_log_error("tools numble is 0");
     ret.error_code = -32602;
+
     return ret;
   }
   for (int i = 0; i < tools_numble; i++)
@@ -243,11 +364,75 @@ returnValues_t mcp_server_responsive_tool_request(char *tool_name, cJSON *argume
  * @param param_name
  * @return cJSON*
  */
-cJSON *mcp_server_get_param(cJSON *params, char *param_name)
+cJSON *emMCP_get_param(cJSON *params, char *param_name)
 {
   if (params == NULL || param_name == NULL)
   {
     return NULL;
   }
   return cJSON_GetObjectItem(params, param_name);
+}
+
+/**
+ * @brief 检查UART数据是否发送成功
+ *
+ */
+bool emMCP_check_uart_send_status(void)
+{
+  return true;
+}
+/**
+ * @brief emMCP注册工具到AI设备
+ *
+ * @return int
+ */
+bool emMCP_registration_tools(void)
+{
+  if (emMCP_dev->tools_root == NULL || emMCP_dev == NULL || emMCP_dev->tools_arry == NULL)
+  {
+    emMCP_log_error("emMCP_registration_tools: tools_root is NULL");
+    return false;
+  }
+
+  emMCP_dev->tools_str = cJSON_PrintUnformatted(emMCP_dev->tools_root);
+
+  char *cmd = (char *)emMCP_malloc(strlen(emMCP_dev->tools_str));
+  memset(cmd, 0, strlen(emMCP_dev->tools_str));
+  sprintf(cmd, "mcp-tool {\"role\":\"MCU\",\"msgType\":\"MCP\",\"MCP\":%s}\r\n", emMCP_dev->tools_str);
+  emMCP_log_debug("cmd: %s", cmd);
+
+  uartPortSendData(cmd, strlen(cmd));
+  emMCP_free(cmd);
+  cJSON_Delete(emMCP_dev->tools_root);
+  emMCP_log_debug("emMCP_registration_tools: send cmd to AI device");
+  emMCP_dev->tools_root = NULL;
+
+  // 等待AI设备返回注册结果
+
+  return true;
+}
+
+/**
+ * @brief 设置通讯波特率
+ *
+ */
+bool emMCP_set_baudrate(uint16_t baudrate)
+{
+  if (baudrate <= 0)
+  {
+    return false;
+  }
+  char cmd[128] = {0};
+  memset(cmd, 0, sizeof(cmd));
+  sprintf(cmd, "baudrate-set {\"role\":\"MCU\",\"msgType\":\"status\",\"status\":\"%d\"}\r\n", baudrate);
+  uartPortSendData(cmd, strlen(cmd));
+  return true;
+}
+
+/**
+ * @brief 状态机运行函数，需要在主循环中调用
+ *
+ */
+void uartPortStateHandle(void)
+{
 }

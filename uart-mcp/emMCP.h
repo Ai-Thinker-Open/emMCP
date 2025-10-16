@@ -11,7 +11,13 @@
 #ifndef __EM_MCP_H__
 #define __EM_MCP_H__
 
+#include "emMCPLOG.h"
 #include "cJSON.h"
+#include <stdbool.h>
+#include "stdint.h"
+#include <string.h>
+
+#define emMCP_VERSION "1.0.0" // emMCP版本号
 
 #define MCP_SERVER_TOOL_NUMBLE_MAX 10			 // 工具数量
 #define MCP_SERVER_TOOL_PROPERTIES_NUM 5		 // 属性数量
@@ -100,8 +106,11 @@ typedef struct
 	char *emMCPVersion;
 	cJSON *tools_root;
 	cJSON *tools_arry;
-	char tools_str[1024];
+	cJSON_Hooks *emMCP_Hooks;
+	const char *tools_str;
 } emMCP_t;
+
+extern char uart_data_buf[512];
 /**
  * @brief 初始化MCP服务器
  *
@@ -110,21 +119,18 @@ typedef struct
  */
 int emMCP_init(emMCP_t *emMCP);
 /**
+ * @brief 串口状态处理函数
+ *
+ */
+void uartPortStateHandle(void);
+/**
  * @brief 添加工具到工具列表
  *
  * @param toolsList
  * @param tool
  * @return int
  */
-int emMCP_add_tool_to_toolList(void *toolsList, emMCP_tool_t *tool);
-/**
- * @brief 添加UART工具到工具列表
- *
- * @param toolsList
- * @param tool
- * @return int
- */
-int mcp_server_add_uart_tool_to_toolList(void *toolsList, cJSON *tool);
+int emMCP_add_tool_to_toolList(emMCP_tool_t *tool);
 /**
  * @brief MCP 服务器响应工具请求
  *
@@ -132,5 +138,26 @@ int mcp_server_add_uart_tool_to_toolList(void *toolsList, cJSON *tool);
  * @param arguments
  * @return returnValues_t
  */
-returnValues_t mcp_server_responsive_tool_request(char *tool_name, cJSON *arguments);
+returnValues_t emMCP_responsive_tool_request(char *tool_name, cJSON *arguments);
+/**
+ * @brief 获取参数,放在回调当中使用
+ *
+ * @param params
+ * @param param_name
+ * @return cJSON*
+ */
+cJSON *emMCP_get_param(cJSON *params, char *param_name);
+/**
+ * @brief 注册MCP工具到AI设备
+ *
+ * @return int
+ */
+bool emMCP_registration_tools(void);
+/**
+ * @brief 设置波特率
+ *
+ * @param baudrate
+ * @return int
+ */
+bool emMCP_set_baudrate(uint16_t baudrate);
 #endif // !__EM_MCP_H__
