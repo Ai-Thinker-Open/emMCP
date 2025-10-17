@@ -13,6 +13,7 @@
 #define __UART_PORT_H__
 
 #include "emMCP.h"
+#include "stdbool.h"
 /**
  * @brief LOG 接口
  *
