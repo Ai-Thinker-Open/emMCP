@@ -48,7 +48,7 @@
 #ifdef ENABLE_LOCALES
 #include <locale.h>
 #endif
-#include "FreeRTOS.h"
+
 #if defined(_MSC_VER)
 #pragma warning(pop)
 #endif
@@ -169,21 +169,16 @@ typedef struct internal_hooks
 /* work around MSVC error C2322: '...' address of dllimport '...' is not static */
 static void *CJSON_CDECL internal_malloc(size_t size)
 {
-    return pvPortMalloc(size);
+    return malloc(size);
 }
 static void CJSON_CDECL internal_free(void *pointer)
 {
-    vPortFree(pointer);
+    free(pointer);
 }
 static void *CJSON_CDECL internal_realloc(void *pointer, size_t size)
 {
-    return pvPortMalloc(pointer, size);
+    return realloc(pointer, size);
 }
-#elif defined(osCMSIS_FreeRTOS)
-
-#define internal_malloc pvPortMalloc
-#define internal_free vPortFree
-#define internal_realloc pvPortMalloc
 #else
 #define internal_malloc malloc
 #define internal_free free

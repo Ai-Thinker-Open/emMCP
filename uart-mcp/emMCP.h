@@ -152,12 +152,12 @@ cJSON *emMCP_get_param(cJSON *params, char *param_name);
  *
  * @return int
  */
-bool emMCP_registration_tools(void);
+int emMCP_registration_tools(void);
 /**
  * @brief 设置波特率
  *
  * @param baudrate
  * @return int
  */
-bool emMCP_set_baudrate(uint16_t baudrate);
+int emMCP_set_baudrate(uint16_t baudrate);
 #endif // !__EM_MCP_H__

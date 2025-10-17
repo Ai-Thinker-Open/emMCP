@@ -8,42 +8,12 @@
  * @copyright Ai-Thinker co.,ltd (c) 2025
  *
  */
-#include <stdio.h>
 #include "emMCP.h"
+#include "FreeRTOS.h"
+#include "uartPort.h"
 #include <stddef.h>
+#include <stdio.h>
 
-/**
- * @brief 状态机状态枚举
- *
- */
-typedef enum
-{
-  STATE_INIT,    // 初始化状态
-  STATE_IDLE,    // 空闲状态
-  STATE_RUNNING, // 运行状态
-  STATE_ERROR,   // 错误状态
-  STATE_MAX      // 状态总数（用于校验）
-} emMCPStateType;
-
-/**
- * @brief 状态机结构体
- *
- */
-typedef struct
-{
-  void (*on_enter)(void); // 进入状态时执行（如初始化资源）
-  void (*on_run)(void);   // 心跳触发时执行（状态核心逻辑）
-  void (*on_exit)(void);  // 退出状态时执行（如释放资源）
-} emMCPStateAction;
-/**
- * @brief 状态机结构体
- * 
- */
-typedef struct
-{
-  emMCPStateType current_state;              // 当前状态
-  emMCPStateAction state_actions[STATE_MAX]; // 状态-行为映射表
-} emMCPStateMachine;
 /**
  * @brief emMCP 工具数组，用来简单管理工具
  *
@@ -53,7 +23,7 @@ emMCP_tool_t mcp_tool_arry[MCP_SERVER_TOOL_NUMBLE_MAX] = {0};
  * @brief emMCP JSON类型字符串
  *
  */
-static char *mcp_sever_type_str[MCP_SERVER_TOOL_TYPE_MAX] = {"false", "true", "null", "number", "string", "array", "object", "text", "boolean"};
+static char *mcp_sever_type_str[MCP_SERVER_TOOL_TYPE_MAX] = {"true", "false", "null", "number", "string", "array", "object", "text", "boolean"};
 /**
  * @brief emMCP 返回值
  *
@@ -77,15 +47,8 @@ char uart_data_buf[512] = {0};
  * @brief emMCP 工具注册标志
  *
  */
-static emMCP_t *emMCP_dev = NULL;
-/**
- * @brief emMCP 内存分配函数
- *
- */
-static cJSON_Hooks emMCP_defaultHooks = {
-    .malloc_fn = emMCP_malloc,
-    .free_fn = emMCP_free,
-};
+emMCP_t *emMCP_dev = NULL;
+
 /**
  * @brief emMCP 初始化
  *
@@ -103,18 +66,12 @@ int emMCP_init(emMCP_t *emMCP)
   if (emMCP_dev->emMCPVersion == NULL)
     emMCP_dev->emMCPVersion = emMCP_VERSION;
 
-  if (emMCP_dev->emMCP_Hooks == NULL)
-  {
-    emMCP_dev->emMCP_Hooks = &emMCP_defaultHooks;
-  }
-
-  cJSON_InitHooks(emMCP_dev->emMCP_Hooks);
   // 初始化emMCP
-  if (emMCP->tools_root == NULL)
+  if (emMCP_dev->tools_root == NULL)
   {
-    emMCP->tools_root = cJSON_CreateObject();
-    emMCP->tools_arry = cJSON_CreateArray();
-    cJSON_AddItemToObject(emMCP->tools_root, "tools", emMCP->tools_arry);
+    emMCP_dev->tools_root = cJSON_CreateObject();
+    emMCP_dev->tools_arry = cJSON_CreateArray();
+    cJSON_AddItemToObject(emMCP_dev->tools_root, "tools", emMCP_dev->tools_arry);
   }
   emMCP_log_info("emMCP_init: emMCP init success");
   return 0;
@@ -176,14 +133,13 @@ int emMCP_add_tool_to_toolList(emMCP_tool_t *tool)
   {
     emMCP_log_error("emMCP_add_tool_to_toolList: emMCP_dev or tools_arry is NULL");
     memset(mcp_tool_arry, 0, sizeof(emMCP_tool_t) * MCP_SERVER_TOOL_NUMBLE_MAX);
-    cJSON_Delete(json_tool);
     return -32604;
   }
-  if (json_ret == false)
+  if (json_ret == -1)
   {
     emMCP_log_error("emMCP_add_tool_to_toolList: json_toolsList add json_tool failed");
     memset(mcp_tool_arry, 0, sizeof(emMCP_tool_t) * MCP_SERVER_TOOL_NUMBLE_MAX);
-    cJSON_Delete(json_tool);
+
     return -32604;
   }
   emMCP_log_debug("add tool name :\"%s\" to arry %s", tmp_tool->name, emMCP_dev->tools_arry->string);
@@ -195,7 +151,7 @@ int emMCP_add_tool_to_toolList(emMCP_tool_t *tool)
   {
     emMCP_log_error("emMCP_add_tool_to_toolList: tool name is NULL");
     memset(mcp_tool_arry, 0, sizeof(emMCP_tool_t) * MCP_SERVER_TOOL_NUMBLE_MAX);
-    cJSON_Delete(json_tool);
+
     return -32604;
   }
   emMCP_log_debug("add tool name :\"%s\" to json_tool", tmp_tool->name);
@@ -210,7 +166,6 @@ int emMCP_add_tool_to_toolList(emMCP_tool_t *tool)
   uint8_t properties_cnt = 0;
   if (sizeof(tmp_tool->inputSchema.properties) / sizeof(properties_t) > 0)
   {
-
     for (properties_cnt = 0; properties_cnt < MCP_SERVER_TOOL_PROPERTIES_NUM; properties_cnt++)
     {
       if (tmp_tool->inputSchema.properties[properties_cnt].name != NULL) // 判断是否为空
@@ -243,7 +198,9 @@ int emMCP_add_tool_to_toolList(emMCP_tool_t *tool)
         cJSON_AddItemToObject(methods, tmp_tool->inputSchema.methods[methods_num].name, method);
         cJSON_AddStringToObject(method, "description", tmp_tool->inputSchema.methods[methods_num].description);
         // 添加parameters参数
-        if (sizeof(tmp_tool->inputSchema.methods[methods_num].parameters) / sizeof(parameters_t) > 0)
+        if (sizeof(tmp_tool->inputSchema.methods[methods_num].parameters) /
+                sizeof(parameters_t) >
+            0)
         {
           cJSON *parameters = cJSON_CreateObject();
           cJSON_AddItemToObject(method, "parameters", parameters);
@@ -267,6 +224,7 @@ int emMCP_add_tool_to_toolList(emMCP_tool_t *tool)
   }
   if (methods_num > 0)
     cJSON_AddItemToObject(inputSchema, "methods", methods);
+  log_debug("json_tool:\n%s", cJSON_PrintUnformatted(json_tool));
   return 0;
 }
 
@@ -278,7 +236,8 @@ int emMCP_add_tool_to_toolList(emMCP_tool_t *tool)
  * @param arguments
  * @return returnValues_t
  */
-returnValues_t emMCP_responsive_tool_request(char *tool_name, cJSON *arguments)
+returnValues_t emMCP_responsive_tool_request(char *tool_name,
+                                             cJSON *arguments)
 {
 
   if (tool_name == NULL || arguments == NULL)
@@ -377,62 +336,65 @@ cJSON *emMCP_get_param(cJSON *params, char *param_name)
  * @brief 检查UART数据是否发送成功
  *
  */
-bool emMCP_check_uart_send_status(void)
+int emMCP_check_uart_send_status(void)
 {
-  return true;
+  return 0;
 }
 /**
  * @brief emMCP注册工具到AI设备
  *
  * @return int
  */
-bool emMCP_registration_tools(void)
+int emMCP_registration_tools(void)
 {
   if (emMCP_dev->tools_root == NULL || emMCP_dev == NULL || emMCP_dev->tools_arry == NULL)
   {
     emMCP_log_error("emMCP_registration_tools: tools_root is NULL");
-    return false;
+    return -1;
   }
-
   emMCP_dev->tools_str = cJSON_PrintUnformatted(emMCP_dev->tools_root);
-
-  char *cmd = (char *)emMCP_malloc(strlen(emMCP_dev->tools_str));
-  memset(cmd, 0, strlen(emMCP_dev->tools_str));
-  sprintf(cmd, "mcp-tool {\"role\":\"MCU\",\"msgType\":\"MCP\",\"MCP\":%s}\r\n", emMCP_dev->tools_str);
-  emMCP_log_debug("cmd: %s", cmd);
+  emMCP_log_debug("emMCP_registration_tools: tools_str:");
+  emMCP_log_debug(emMCP_dev->tools_str);
+  char *cmd = (char *)emMCP_malloc(strlen(emMCP_dev->tools_str) + 64);
+  if (cmd != NULL && emMCP_dev->tools_str != NULL)
+  {
+    memset(cmd, 0, strlen(emMCP_dev->tools_str) + 64);
+    sprintf(cmd, "mcp-tool {\"role\":\"MCU\",\"msgType\":\"MCP\",\"MCP\":%s}\r\n", emMCP_dev->tools_str);
+    emMCP_log_debug("cmd: %s", cmd);
+  }
 
   uartPortSendData(cmd, strlen(cmd));
   emMCP_free(cmd);
+  if (emMCP_dev->tools_str != NULL)
+    cJSON_free(emMCP_dev->tools_str);
   cJSON_Delete(emMCP_dev->tools_root);
   emMCP_log_debug("emMCP_registration_tools: send cmd to AI device");
   emMCP_dev->tools_root = NULL;
 
   // 等待AI设备返回注册结果
 
-  return true;
+  return 0;
 }
 
 /**
  * @brief 设置通讯波特率
  *
  */
-bool emMCP_set_baudrate(uint16_t baudrate)
+int emMCP_set_baudrate(uint16_t baudrate)
 {
   if (baudrate <= 0)
   {
-    return false;
+    return -1;
   }
   char cmd[128] = {0};
   memset(cmd, 0, sizeof(cmd));
   sprintf(cmd, "baudrate-set {\"role\":\"MCU\",\"msgType\":\"status\",\"status\":\"%d\"}\r\n", baudrate);
   uartPortSendData(cmd, strlen(cmd));
-  return true;
+  return 0;
 }
 
 /**
  * @brief 状态机运行函数，需要在主循环中调用
  *
  */
-void uartPortStateHandle(void)
-{
-}
+void uartPortStateHandle(void) {}

@@ -34,8 +34,7 @@ void user_mcp_init(void)
 	led_tool.name = "Self.LED.switch";
 	led_tool.description = "LED switch tool";
 	led_tool.inputSchema.properties[0].name = "enable";
-	led_tool.inputSchema.properties[0].description =
-		"LED switch, true:on, false:off, when queried, attribute is null";
+	led_tool.inputSchema.properties[0].description = "LED switch, true:on, false:off, when queried, attribute is null";
 	led_tool.inputSchema.properties[0].type = MCP_SERVER_TOOL_TYPE_BOOLEAN;
 	int ret = emMCP_add_tool_to_toolList(&led_tool);
 	if (ret != 0)

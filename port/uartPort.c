@@ -24,12 +24,12 @@
  * @param len
  * @return int
  */
-bool uartPortSendData(char *data, int len)
+int uartPortSendData(char *data, int len)
 {
     // 在此处实现串口发送函数
     if (data == NULL || len <= 0)
     {
-        return false;
+        return -1;
     }
     // TODO: 实现串口发送函数
     // 例如：HAL_UART_Transmit(&huart1, (uint8_t *)data, len, 1000);
@@ -43,16 +43,15 @@ bool uartPortSendData(char *data, int len)
  * @param len
  * @return int
  */
-bool uartPortRecvData(char *data, int len)
+int uartPortRecvData(char *data, int len)
 {
     if (data == NULL)
     {
         emMCP_log_error("uartPortRecvData: data is NULL");
-        return false;
+        return -1;
     }
     // emMCP_log_info("%s", data);
     memset(uart_data_buf, 0, sizeof(uart_data_buf));
     memcpy(uart_data_buf, data, len);
-    // UART_RECV = 1;
-    return true;
+    return 0;
 }

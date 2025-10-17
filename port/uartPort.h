@@ -13,6 +13,7 @@
 #define __UART_PORT_H__
 
 #include "emMCP.h"
+#include "stdbool.h"
 /**
  * @brief LOG 接口
  *
@@ -40,13 +41,13 @@
  * @param len
  * @return int
  */
-bool uartPortSendData(char *data, int len);
+int uartPortSendData(char *data, int len);
 /**
  * @brief 接收串口数据
  *
  * @param ch
  * @return int
  */
-bool uartPortRecvData(char *data, int len);
+int uartPortRecvData(char *data, int len);
 
 #endif // __UART_PORT_H__
