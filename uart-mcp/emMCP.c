@@ -146,8 +146,10 @@ int emMCP_AddToolToToolList(emMCP_tool_t *tool)
     tmp_tool->setRequestHandler = emMCP_Set_CMDCallback;
   if (tmp_tool->checkRequestHandler == NULL)
     tmp_tool->checkRequestHandler = emMCP_check_CMDCallback;
+
   if (mcp_tool_arry[0].name == NULL)
   {
+    emMCP_log_debug("tools:\"%s\" add %d", tmp_tool->name, 0);
     memcpy(&mcp_tool_arry[0], tmp_tool, sizeof(emMCP_tool_t));
   }
   else
@@ -155,7 +157,6 @@ int emMCP_AddToolToToolList(emMCP_tool_t *tool)
     for (int i = 0; i < MCP_SERVER_TOOL_NUMBLE_MAX; i++)
     {
       if (mcp_tool_arry[i].name == NULL)
-
       {
         emMCP_log_debug("tools:\"%s\" add %d", tmp_tool->name, i);
         memcpy(&mcp_tool_arry[i], tmp_tool, sizeof(emMCP_tool_t));
@@ -290,92 +291,89 @@ static void emMCP_ResponsiveToolRequest(char *tool_name, cJSON *arguments)
   uint8_t tools_numble = 0;
   for (tools_numble = 0; tools_numble < MCP_SERVER_TOOL_NUMBLE_MAX; tools_numble++)
   {
-    if (mcp_tool_arry[tools_numble].name == NULL)
+    if (mcp_tool_arry[tools_numble].name != NULL && strcmp(mcp_tool_arry[tools_numble].name, tool_name) == 0)
     {
       break;
     }
   }
-  if (tools_numble == 0)
-  {
-    emMCP_log_error("tools numble is 0");
 
+  // for (int i = 0; i < tools_numble; i++)
+  // {
+  if (strcmp(mcp_tool_arry[tools_numble].name, tool_name) == 0)
+  {
+    // 判断是否为 methods 参数
+    if (cJSON_GetObjectItem(arguments, mcp_tool_arry[tools_numble].inputSchema.methods[0].parameters[0].name) != NULL ||
+        cJSON_GetObjectItem(arguments, mcp_tool_arry[tools_numble].inputSchema.methods[0].name) != NULL ||
+        cJSON_GetObjectItem(arguments, "methods") != NULL)
+    {
+      // 执行请求
+      if (cJSON_GetObjectItem(arguments, "methods") != NULL)
+      {
+        cJSON *method = cJSON_GetObjectItem(cJSON_GetObjectItem(arguments, "methods"), mcp_tool_arry[tools_numble].inputSchema.methods[0].name);
+        if (mcp_tool_arry[tools_numble].setRequestHandler != NULL)
+        {
+          mcp_tool_arry[tools_numble].setRequestHandler(method == NULL ? arguments : method);
+        }
+        else
+        {
+          mcp_tool_arry[tools_numble].setRequestHandler(mcp_tool_arry[tools_numble].name);
+        }
+      }
+      else if (cJSON_GetObjectItem(arguments, mcp_tool_arry[tools_numble].inputSchema.methods[0].parameters[0].name) != NULL)
+      {
+        cJSON *method = cJSON_GetObjectItem(arguments, mcp_tool_arry[tools_numble].inputSchema.methods[0].parameters[0].name);
+        if (mcp_tool_arry[tools_numble].setRequestHandler != NULL)
+        {
+          mcp_tool_arry[tools_numble].setRequestHandler(method == NULL ? arguments : method);
+        }
+        else
+        {
+          mcp_tool_arry[tools_numble].setRequestHandler(mcp_tool_arry[tools_numble].name);
+        }
+      }
+      else
+      {
+        if (mcp_tool_arry[tools_numble].setRequestHandler != NULL)
+        {
+          mcp_tool_arry[tools_numble].setRequestHandler(arguments);
+        }
+        else
+        {
+          mcp_tool_arry[tools_numble].setRequestHandler(mcp_tool_arry[tools_numble].name);
+        }
+      }
+    }
+    else if (cJSON_GetObjectItem(arguments, mcp_tool_arry[tools_numble].inputSchema.properties[0].name) != NULL || arguments->child == NULL)
+    {
+      cJSON *prop = cJSON_GetObjectItem(arguments, mcp_tool_arry[tools_numble].inputSchema.properties[0].name);
+
+      if (prop != NULL && prop->type != cJSON_NULL)
+      {
+        if (mcp_tool_arry[tools_numble].setRequestHandler != NULL)
+        {
+          emMCP_log_debug("setRequestHandler");
+          mcp_tool_arry[tools_numble].setRequestHandler(arguments);
+        }
+        else
+        {
+          mcp_tool_arry[tools_numble].setRequestHandler(mcp_tool_arry[tools_numble].name);
+        }
+      }
+      else
+      {
+        if (mcp_tool_arry[tools_numble].checkRequestHandler != NULL)
+        {
+          mcp_tool_arry[tools_numble].checkRequestHandler(arguments);
+        }
+        else
+        {
+          mcp_tool_arry[tools_numble].checkRequestHandler(mcp_tool_arry[tools_numble].name);
+        }
+      }
+    }
     return;
   }
-  for (int i = 0; i < tools_numble; i++)
-  {
-    if (strcmp(mcp_tool_arry[i].name, tool_name) == 0)
-    {
-      // 判断是否为 methods 参数
-      if (cJSON_GetObjectItem(arguments, mcp_tool_arry[i].inputSchema.methods[0].parameters[0].name) != NULL ||
-          cJSON_GetObjectItem(arguments, mcp_tool_arry[i].inputSchema.methods[0].name) != NULL ||
-          cJSON_GetObjectItem(arguments, "methods") != NULL)
-      {
-        // 执行请求
-        if (cJSON_GetObjectItem(arguments, "methods") != NULL)
-        {
-          cJSON *method = cJSON_GetObjectItem(cJSON_GetObjectItem(arguments, "methods"), mcp_tool_arry[i].inputSchema.methods[0].name);
-          if (mcp_tool_arry[i].setRequestHandler != NULL)
-          {
-            mcp_tool_arry[i].setRequestHandler(method == NULL ? arguments : method);
-          }
-          else
-          {
-            mcp_tool_arry[i].setRequestHandler(mcp_tool_arry[i].name);
-          }
-        }
-        else if (cJSON_GetObjectItem(arguments, mcp_tool_arry[i].inputSchema.methods[0].parameters[0].name) != NULL)
-        {
-          cJSON *method = cJSON_GetObjectItem(arguments, mcp_tool_arry[i].inputSchema.methods[0].parameters[0].name);
-          if (mcp_tool_arry[i].setRequestHandler != NULL)
-          {
-            mcp_tool_arry[i].setRequestHandler(method == NULL ? arguments : method);
-          }
-          else
-          {
-            mcp_tool_arry[i].setRequestHandler(mcp_tool_arry[i].name);
-          }
-        }
-        else
-        {
-          if (mcp_tool_arry[i].setRequestHandler != NULL)
-          {
-            mcp_tool_arry[i].setRequestHandler(arguments);
-          }
-          else
-          {
-            mcp_tool_arry[i].setRequestHandler(mcp_tool_arry[i].name);
-          }
-        }
-      }
-      else if (cJSON_GetObjectItem(arguments, mcp_tool_arry[i].inputSchema.properties[0].name) != NULL || arguments->child == NULL)
-      {
-        cJSON *prop = cJSON_GetObjectItem(arguments, mcp_tool_arry[i].inputSchema.properties[0].name);
-        if (prop != NULL && prop->type != cJSON_NULL)
-        {
-          if (mcp_tool_arry[i].setRequestHandler != NULL)
-          {
-            mcp_tool_arry[i].setRequestHandler(arguments);
-          }
-          else
-          {
-            mcp_tool_arry[i].setRequestHandler(mcp_tool_arry[i].name);
-          }
-        }
-        else
-        {
-          if (mcp_tool_arry[i].checkRequestHandler != NULL)
-          {
-            mcp_tool_arry[i].checkRequestHandler(arguments);
-          }
-          else
-          {
-            mcp_tool_arry[i].checkRequestHandler(mcp_tool_arry[i].name);
-          }
-        }
-      }
-      return;
-    }
-  }
+  // }
   // 回调
 }
 /**
@@ -539,7 +537,6 @@ static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type)
       if (arguments != NULL && arguments->type == cJSON_Object && mcp_tool_name != NULL)
       {
         // 处理MCP工具
-        emMCP_log_debug("Starting the MCP tool %s", mcp_tool_name->valuestring);
         emMCP_ResponsiveToolRequest(mcp_tool_name->valuestring, arguments);
       }
     }

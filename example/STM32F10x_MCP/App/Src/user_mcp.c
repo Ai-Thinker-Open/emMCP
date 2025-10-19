@@ -21,12 +21,19 @@ static void setLEDRequestHandler(void *arguments)
 
 	cJSON *params = (cJSON *)arguments; // 获取参数
 	// 获取被设置参数值
-	cJSON *enabled = emMCP_GetParam(params, "enabled");
+	cJSON *enabled = emMCP_GetParam(params, "enable");
 	if (enabled != NULL)
 	{
 		log_info("set led enabled:%d", enabled->valueint);
-		HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, enabled->valueint ? GPIO_PIN_SET : GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, enabled->valueint ? GPIO_PIN_RESET : GPIO_PIN_SET);
+		osDelay(10);
 		emMCP_ResponseValue(enabled->valueint ? "true" : "false");
+	}
+	else
+	{
+		char *value = cJSON_PrintUnformatted(params);
+		log_error("get param error, params:%s", value);
+		cJSON_free(value);
 	}
 }
 
@@ -39,6 +46,7 @@ void user_mcp_init(void)
 	led_tool.inputSchema.properties[0].description = "LED switch, true:on, false:off, when queried, attribute is null";
 	led_tool.inputSchema.properties[0].type = MCP_SERVER_TOOL_TYPE_BOOLEAN;
 	led_tool.setRequestHandler = setLEDRequestHandler;
+	
 	air_tool.name = "空调开关";
 	air_tool.description = "空调开关工具";
 	air_tool.inputSchema.properties[0].name = "enable";
