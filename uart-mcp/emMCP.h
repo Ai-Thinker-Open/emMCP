@@ -19,17 +19,19 @@
 
 #define emMCP_VERSION "1.0.0" // emMCP版本号
 
-#define MCP_SERVER_TOOL_NUMBLE_MAX 10			 // 工具数量
+#define MCP_SERVER_TOOL_NUMBLE_MAX 5			 // 工具数量
 #define MCP_SERVER_TOOL_PROPERTIES_NUM 5		 // 属性数量
 #define MCP_SERVER_TOOL_METHODS_NUM 5			 // 方法数量
 #define MCP_SERVER_TOOL_METHODS_PARAMETERS_NUM 5 // 方法参数数量
 
+#define __emMCPWeak __attribute__((weak)) // 弱函数
 /**
  * @brief MCP 服务器工具类型枚举
  *
  */
 typedef enum
 {
+	MCP_SERVER_TOOL_TYPE_NONE = -1,
 	MCP_SERVER_TOOL_TYPE_FALSE = 0,
 	MCP_SERVER_TOOL_TYPE_TRUE,
 	MCP_SERVER_TOOL_TYPE_NULL,
@@ -42,6 +44,24 @@ typedef enum
 	MCP_SERVER_TOOL_TYPE_MAX,
 } mcp_server_tool_type_t;
 
+typedef enum
+{
+	emMCP_EVENT_NONE = 0,
+	emMCP_EVENT_CMD_OK,
+	emMCP_EVENT_CMD_ERROR,
+	emMCP_EVENT_AI_START,
+	emMCP_EVENT_AI_NETCFG,
+	emMCP_EVENT_AI_NETERR,
+	emMCP_EVENT_AI_WIFI_CONNNECT,
+	emMCP_EVENT_AI_WIFI_DISCONNECT,
+	emMCP_EVENT_AI_WAKE,
+	emMCP_EVENT_AI_SLEEP,
+	emMCP_EVENT_AI_OTAUPDATE,
+	emMCP_EVENT_AI_OTAOK,
+	emMCP_EVENT_AI_OTAERR,
+	emMCP_EVENT_AI_MCP_CMD,
+	emMCP_EVENT_AI_MCP_Text,
+} emMCP_event_t;
 /**
  * @brief 属性结构体
  *
@@ -78,38 +98,34 @@ typedef struct
 	properties_t properties[MCP_SERVER_TOOL_PROPERTIES_NUM]; // 属性
 	methods_t methods[MCP_SERVER_TOOL_METHODS_NUM];			 // 方法
 } inputSchema_t;
-/**
- * @brief MCP 服务器工具结构体
- *
- */
-typedef struct
-{
-	int error_code; // 错误码
-	char value[64]; // 内容
-	char *type;		//  类型
-} returnValues_t;
-/**
- * @brief MCP 服务器工具结构体
- *
- */
-typedef struct
-{
-	char *name;									 // 工具名称
-	char *description;							 // 工具描述
-	returnValues_t (*setRequestHandler)(void *); // 工具回调函数
-	void (*checkRequestHandler)(void *);		 // 工具回调函数
-	inputSchema_t inputSchema;					 // 输入参数
-} emMCP_tool_t;
 
+/**
+ * @brief MCP 服务器工具结构体
+ *
+ */
+typedef struct emMCP_tool
+{
+	char *name;							 // 工具名称
+	char *description;					 // 工具描述
+	void (*setRequestHandler)(void *);	 // 工具回调函数
+	void (*checkRequestHandler)(void *); // 工具回调函数
+	inputSchema_t inputSchema;			 // 输入参数
+	struct emMCP_tool *next;			 // 下一个工具
+} emMCP_tool_t;
+/**
+ * @brief emMCP 结构体
+ *
+ */
 typedef struct
 {
 	char *emMCPVersion;
 	cJSON *tools_root;
 	cJSON *tools_arry;
 	cJSON_Hooks *emMCP_Hooks;
-	const char *tools_str;
+	char *tools_str;
+	bool isUartRecv;
+	void (*emMCPEventCallback)(emMCP_event_t, mcp_server_tool_type_t, void *);
 } emMCP_t;
-
 extern char uart_data_buf[512];
 /**
  * @brief 初始化MCP服务器
@@ -117,12 +133,13 @@ extern char uart_data_buf[512];
  * @param emMCP
  * @return int
  */
-int emMCP_init(emMCP_t *emMCP);
+int emMCP_Init(emMCP_t *emMCP);
 /**
- * @brief 串口状态处理函数
+ * @brief MCP 心跳处理函数
+ * @brief 需要循环调用
  *
  */
-void uartPortStateHandle(void);
+void emMCP_TickHandle(int delay_ms);
 /**
  * @brief 添加工具到工具列表
  *
@@ -130,15 +147,7 @@ void uartPortStateHandle(void);
  * @param tool
  * @return int
  */
-int emMCP_add_tool_to_toolList(emMCP_tool_t *tool);
-/**
- * @brief MCP 服务器响应工具请求
- *
- * @param tool_name
- * @param arguments
- * @return returnValues_t
- */
-returnValues_t emMCP_responsive_tool_request(char *tool_name, cJSON *arguments);
+int emMCP_AddToolToToolList(emMCP_tool_t *tool);
 /**
  * @brief 获取参数,放在回调当中使用
  *
@@ -146,18 +155,37 @@ returnValues_t emMCP_responsive_tool_request(char *tool_name, cJSON *arguments);
  * @param param_name
  * @return cJSON*
  */
-cJSON *emMCP_get_param(cJSON *params, char *param_name);
+cJSON *emMCP_GetParam(cJSON *params, char *param_name);
 /**
  * @brief 注册MCP工具到AI设备
  *
  * @return int
  */
-int emMCP_registration_tools(void);
+int emMCP_RegistrationTools(void);
 /**
  * @brief 设置波特率
  *
  * @param baudrate
  * @return int
  */
-int emMCP_set_baudrate(uint16_t baudrate);
+int emMCP_SetBaudrate(uint16_t baudrate);
+/**
+ * @brief 检查串口发送状态
+ *
+ * @return int
+ */
+int emMCP_CheckUartSendStatus(void);
+/**
+ * @brief 更新串口接收状态
+ *
+ * @param isRecv
+ */
+void emMCP_UpdateUartRecv(bool isRecv);
+/**
+ * @brief 响应控制结果
+ *
+ * @param value
+ * @return int
+ */
+int emMCP_ResponseValue(char *value);
 #endif // !__EM_MCP_H__

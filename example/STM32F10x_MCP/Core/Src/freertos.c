@@ -52,23 +52,23 @@
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
-  .name = "defaultTask",
-  .stack_size = 128 * 4,
-  .priority = (osPriority_t) osPriorityNormal,
+    .name = "defaultTask",
+    .stack_size = 128 * 4,
+    .priority = (osPriority_t)osPriorityNormal,
 };
 /* Definitions for LED_Blank */
 osThreadId_t LED_BlankHandle;
 const osThreadAttr_t LED_Blank_attributes = {
-  .name = "LED_Blank",
-  .stack_size = 256 * 4,
-  .priority = (osPriority_t) osPriorityLow,
+    .name = "LED_Blank",
+    .stack_size = 128 * 4,
+    .priority = (osPriority_t)osPriorityLow,
 };
 /* Definitions for log_send_task */
 osThreadId_t log_send_taskHandle;
 const osThreadAttr_t log_send_task_attributes = {
-  .name = "log_send_task",
-  .stack_size = 256 * 4,
-  .priority = (osPriority_t) osPriorityLow1,
+    .name = "log_send_task",
+    .stack_size = 256 * 4,
+    .priority = (osPriority_t)osPriorityLow1,
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -83,11 +83,12 @@ void _logSend(void *argument);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /**
-  * @brief  FreeRTOS initialization
-  * @param  None
-  * @retval None
-  */
-void MX_FREERTOS_Init(void) {
+ * @brief  FreeRTOS initialization
+ * @param  None
+ * @retval None
+ */
+void MX_FREERTOS_Init(void)
+{
   /* USER CODE BEGIN Init */
 
   /* USER CODE END Init */
@@ -113,7 +114,7 @@ void MX_FREERTOS_Init(void) {
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* creation of LED_Blank */
-  LED_BlankHandle = osThreadNew(LED_Blank_Handle, NULL, &LED_Blank_attributes);
+  // LED_BlankHandle = osThreadNew(LED_Blank_Handle, NULL, &LED_Blank_attributes);
 
   /* creation of log_send_task */
   log_send_taskHandle = osThreadNew(_logSend, NULL, &log_send_task_attributes);
@@ -125,7 +126,6 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_EVENTS */
   /* add events, ... */
   /* USER CODE END RTOS_EVENTS */
-
 }
 
 /* USER CODE BEGIN Header_StartDefaultTask */
@@ -176,16 +176,16 @@ void _logSend(void *argument)
 {
   /* USER CODE BEGIN _logSend */
   /* Infinite loop */
-  log_info("log send task init");
+
   user_mcp_init();
-  log_info("user mcp init success");
   for (;;)
   {
     if (UART_RECV)
     {
-      log_info("%s", uart_data_buf);
+      log_debug("uart recv data:%s", uart_data_buf);
+      UART_RECV = 0;
     }
-    UART_RECV = 0;
+    emMCP_TickHandle(10);
     osDelay(100);
   }
   /* USER CODE END _logSend */
@@ -195,4 +195,3 @@ void _logSend(void *argument)
 /* USER CODE BEGIN Application */
 
 /* USER CODE END Application */
-

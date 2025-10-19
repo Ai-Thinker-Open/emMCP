@@ -12,6 +12,6 @@
 #ifndef __USER_MCP_H
 #define __USER_MCP_H
 #include "emMCP.h"
-
+#include "main.h"
 void user_mcp_init(void);
 #endif /* __USER_MCP_H */

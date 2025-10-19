@@ -69,8 +69,6 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
     // 这里可以处理接收到的数据，Size 是接收到的数据长度
 
     uartPortRecvData((char *)usart2_rx_buf, (int)Size);
-    // 清空接收缓冲区
-    UART_RECV = 1;
     // 重新启动DMA接收
     HAL_UARTEx_ReceiveToIdle_DMA(&huart2, usart2_rx_buf, USART2_RX_BUF_SIZE);
     __HAL_DMA_DISABLE_IT(&hdma_usart2_rx, DMA_IT_HT);

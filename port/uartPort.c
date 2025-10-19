@@ -33,8 +33,8 @@ int uartPortSendData(char *data, int len)
     }
     // TODO: 实现串口发送函数
     // 例如：HAL_UART_Transmit(&huart1, (uint8_t *)data, len, 1000);
-    HAL_UART_Transmit(&huart2, (uint8_t *)data, len, 1000);
-    return true;
+
+    return HAL_UART_Transmit(&huart2, (uint8_t *)data, len, 1000);
 }
 /**
  * @brief 串口接收函数接口,把这个函数在串口接收中断或接收循环中调用
@@ -50,8 +50,9 @@ int uartPortRecvData(char *data, int len)
         emMCP_log_error("uartPortRecvData: data is NULL");
         return -1;
     }
-    // emMCP_log_info("%s", data);
+    emMCP_log_debug("%s", data);
     memset(uart_data_buf, 0, sizeof(uart_data_buf));
     memcpy(uart_data_buf, data, len);
+    emMCP_UpdateUartRecv(true);
     return 0;
 }
