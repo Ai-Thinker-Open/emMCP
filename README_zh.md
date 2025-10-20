@@ -10,7 +10,7 @@
 <a href="https://github.com/Ai-Thinker-Open/emMCP/graphs/contributors"><img alt="GitHub contributors" src="https://img.shields.io/github/contributors/Ai-Thinker-Open/emMCP?color=2b9348"></a>
 <a href="https://github.com/Ai-Thinker-Open/emMCP/blob/master/LICENSE"><img src="https://img.shields.io/github/license/Ai-Thinker-Open/emMCP?color=2b9348" alt="License Badge"/></a>
 
-<i>Like the project?Please consider giving Star ⭐️ to help improve it!</i>
+<i>喜欢该项目吗？请考虑点个 Star ⭐️ ，以帮助改进该项目！</i>
 
 </div>
 
