@@ -39,7 +39,7 @@ emMCP_LogLevel log_level = emMCP_LOG_LEVEL_DEBUG;
  * @brief emMCP 串口数据缓存区
  *
  */
-char uart_data_buf[512] = {0};
+char *uart_data_buf = NULL;
 /**
  * @brief emMCP 串口数据参数缓存区
  *
@@ -73,8 +73,8 @@ static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type);
  */
 __emMCPWeak void emMCP_EventCallback(emMCP_event_t event, mcp_server_tool_type_t type, void *param)
 {
-  char *param_str = (char *)param;
-  emMCP_log_debug("emMCP_EventCallback: event:%d,type:%d,param:%s", event, type, param_str);
+
+  emMCP_log_debug("emMCP_EventCallback: event:%d,type:%d,param:%s", event, type, (char *)param);
 }
 /**
  * @brief emMCP 设置回调函数提醒，如果你没有设置回调函数，该工具的检查函数都会调用这个函数
@@ -377,7 +377,7 @@ int emMCP_RegistrationTools(void)
     memset(cmd, 0, strlen(emMCP_dev->tools_str) + 64);
     sprintf(cmd, "mcp-tool {\"role\":\"MCU\",\"msgType\":\"MCP\",\"MCP\":%s}\r\n", emMCP_dev->tools_str);
 
-    memset(uart_data_buf, 0, sizeof(uart_data_buf));
+    // memset(uart_data_buf, 0, sizeof(uart_data_buf));
     uartPortSendData(cmd, strlen(cmd));
   }
   emMCP_free(cmd);

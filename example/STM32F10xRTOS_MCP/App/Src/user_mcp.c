@@ -11,7 +11,7 @@
 #include "user_mcp.h"
 #include "log.h"
 #include "usart.h"
-char* rxBuffer[MCP_BUFFER_SIZE] = {0};
+char rxBuffer[MCP_BUFFER_SIZE] = {0};
 static emMCP_t emMCP_dev;
 
 emMCP_tool_t led_tool;

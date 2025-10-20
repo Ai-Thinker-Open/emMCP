@@ -39,7 +39,7 @@ emMCP_LogLevel log_level = emMCP_LOG_LEVEL_DEBUG;
  * @brief emMCP 串口数据缓存区
  *
  */
-char uart_data_buf[512] = {0};
+char *uart_data_buf = NULL;
 /**
  * @brief emMCP 串口数据参数缓存区
  *

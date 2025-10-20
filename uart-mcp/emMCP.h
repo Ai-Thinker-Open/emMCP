@@ -129,7 +129,11 @@ typedef struct
 	bool isUartRecv;
 	void (*emMCPEventCallback)(emMCP_event_t, mcp_server_tool_type_t, void *);
 } emMCP_t;
-extern char uart_data_buf[512];
+/**
+ * @brief emMCP 串口数据缓存
+ *
+ */
+extern char *uart_data_buf;
 /**
  * @brief 初始化MCP服务器
  *
@@ -188,8 +192,8 @@ int emMCP_SetAiWakeUp(uint8_t WakeUp_Time);
 int emMCP_SetAiVolume(uint8_t volume);
 /**
  * @brief 获取AI音量
- * 
- * @return uint8_t 
+ *
+ * @return uint8_t
  */
 uint8_t emMCP_CheckAiVolume(void);
 /**

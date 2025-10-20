@@ -129,7 +129,10 @@ typedef struct
 	bool isUartRecv;
 	void (*emMCPEventCallback)(emMCP_event_t, mcp_server_tool_type_t, void *);
 } emMCP_t;
-extern char uart_data_buf[512];
+/***
+ * @brief emMCP 串口数据缓存
+ */
+extern char* uart_data_buf;
 /**
  * @brief 初始化MCP服务器
  *

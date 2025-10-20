@@ -48,9 +48,9 @@ int uartPortRecvData(char *data, int len)
         emMCP_log_error("uartPortRecvData: data is NULL");
         return -1;
     }
-
-    memset(uart_data_buf, 0, sizeof(uart_data_buf));
-    memcpy(uart_data_buf, data, len);
+    uart_data_buf=data;
+    //     memset(uart_data_buf, 0, sizeof(uart_data_buf));
+    // memcpy(uart_data_buf, data, len);
     emMCP_UpdateUartRecv(true);
     return 0;
 }

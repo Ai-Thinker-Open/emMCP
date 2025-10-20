@@ -14,8 +14,6 @@
 
 </div>
 
-
-
 ## Welcome to emMCP
 
 
