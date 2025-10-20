@@ -14,15 +14,6 @@
 
 #include "emMCP.h"
 #include "stdbool.h"
-/**
- * @brief LOG 接口
- *
- */
-#include "log.h"
-/**
- * @brief  系统内存头文件
- *
- */
 
 /**
  * @brief 定义串口打印函数
@@ -33,13 +24,20 @@
  * @brief 定义内存操作函数
  *
  */
-#define emMCP_malloc
-#define emMCP_free
+// #define emMCP_malloc
+// #define emMCP_free
+#ifndef emMCP_malloc
+#error "emMCP_malloc is not defined"
+#endif
+#ifndef emMCP_free
+#error "emMCP_free is not defined"
+#endif
 /**
  * @brief 定义延时函数
  *
  */
 // #define emMCP_delay
+
 #ifndef emMCP_delay
 #error "emMCP_delay is not defined"
 #endif

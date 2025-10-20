@@ -31,7 +31,6 @@ int uartPortSendData(char *data, int len)
     {
         return -1;
     }
-    emMCP_log_debug("uartPortSendData: %s", data);
     return HAL_UART_Transmit(&huart2, (uint8_t *)data, len, 100);
 }
 /**
