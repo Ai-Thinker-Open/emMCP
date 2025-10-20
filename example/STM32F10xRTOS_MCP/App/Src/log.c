@@ -11,7 +11,7 @@
 #include "log.h"
 #include "usart.h"
 
-#define LOG_BUFFER_SIZE 512
+#define LOG_BUFFER_SIZE 256
 
 LogLevel g_log_level = LOG_LEVEL_DEBUG;
 

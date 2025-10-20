@@ -14,7 +14,7 @@
 #include "emMCP.h"
 #include "main.h"
 
-#define MCP_BUFFER_SIZE 512
+#define MCP_BUFFER_SIZE 256
 extern char rxBufferp[MCP_BUFFER_SIZE];
 
 void user_mcp_init(void);
