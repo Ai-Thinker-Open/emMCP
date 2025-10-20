@@ -1,14 +1,18 @@
-<center><h1>emMCP</h1></center>
 
-<center>
+[![English](https://img.shields.io/badge/Language-English-green.svg)](README.md)
+<h1 align="center">emMCP</h1>
+<div align="center">
 
-[📖使用教程](https://docs.ai-thinker.com/uart_mcp/)|[💻更多资料](https://docs.ai-thinker.com/uart_mcp/)<br>
-![GitHub Stars](https://img.shields.io/github/stars/Ai-Thinker-Open/emMCP?style=flat&label=Stars&color=yellow)
-![GitHub Forks](https://img.shields.io/github/forks/Ai-Thinker-Open/emMCP?style=flat&label=Forks&color=green)
-![License: MIT](https://img.shields.io/badge/License-MIT-green?style=flat)
-</center>
+<a href="https://github.com/Ai-Thinker-Open/emMCP/stargazers"><img src="https://img.shields.io/github/stars/Ai-Thinker-Open/emMCP" alt="Stars Badge"/></a>
+<a href="https://github.com/Ai-Thinker-Open/emMCP/network/members"><img src="https://img.shields.io/github/forks/Ai-Thinker-Open/emMCP" alt="Forks Badge"/></a>
+<a href="https://github.com/Ai-Thinker-Open/emMCP/pulls"><img src="https://img.shields.io/github/issues-pr/Ai-Thinker-Open/emMCP" alt="Pull Requests Badge"/></a>
+<a href="https://github.com/Ai-Thinker-Open/emMCP/issues"><img src="https://img.shields.io/github/issues/Ai-Thinker-Open/emMCP" alt="Issues Badge"/></a>
+<a href="https://github.com/Ai-Thinker-Open/emMCP/graphs/contributors"><img alt="GitHub contributors" src="https://img.shields.io/github/contributors/Ai-Thinker-Open/emMCP?color=2b9348"></a>
+<a href="https://github.com/Ai-Thinker-Open/emMCP/blob/master/LICENSE"><img src="https://img.shields.io/github/license/Ai-Thinker-Open/emMCP?color=2b9348" alt="License Badge"/></a>
 
-[English](README.md) | [简体中文](README_zh.md)
+<i>Like the project?Please consider giving Star ⭐️ to help improve it!</i>
+
+</div>
 
 ## 欢迎使用 emMCP
 
