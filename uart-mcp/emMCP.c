@@ -44,7 +44,7 @@ char *uart_data_buf = NULL;
  * @brief emMCP 串口数据参数缓存区
  *
  */
-static char uart_data_paramp[256];
+static char *uart_data_paramp = NULL;
 /**
  * @brief emMCP 工具注册标志
  *
@@ -484,9 +484,7 @@ static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type)
     msgType_param = cJSON_GetObjectItem(root, "MCP");
     if (msgType_param == NULL || msgType_param->type != cJSON_Object)
     {
-
       cJSON_Delete(root);
-      memset(uart_data_paramp, 0, sizeof(uart_data_paramp));
       return emMCP_EVENT_NONE;
     }
     // 从MCP 工具中解析出参数
@@ -509,17 +507,13 @@ static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type)
     msgType_param = cJSON_GetObjectItem(root, "MCP Text");
     if (msgType_param == NULL || msgType_param->type != cJSON_Object)
     {
-
       cJSON_Delete(root);
-      memset(uart_data_paramp, 0, sizeof(uart_data_paramp));
       return emMCP_EVENT_NONE;
     }
   }
-
-  // _exit:
   if (emMCP_event != emMCP_EVENT_NONE)
   {
-    memset(uart_data_paramp, 0, sizeof(uart_data_paramp));
+    memset(uart_data_paramp, 0, 256);
     if (*param_type == MCP_SERVER_TOOL_TYPE_STRING)
       strcpy(uart_data_paramp, msgType_param->valuestring);
     else
@@ -529,9 +523,7 @@ static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type)
       cJSON_free(param_str);
     }
   }
-
   cJSON_Delete(root);
-
   return emMCP_event;
 }
 /**
@@ -558,14 +550,16 @@ void emMCP_TickHandle(int delay_ms)
   {
     delay_time = delay_ms;
   }
-
   if (emMCP_dev->isUartRecv)
   {
     mcp_server_tool_type_t _param_type = MCP_SERVER_TOOL_TYPE_STRING;
     emMCP_ReturnEvent(&_param_type);
+    uart_data_paramp = pvPortMalloc(256);
+    memset(uart_data_paramp, 0, 256);
     emMCP_dev->emMCPEventCallback(emMCP_event, _param_type, uart_data_paramp);
     emMCP_dev->isUartRecv = 0;
     emMCP_event = emMCP_EVENT_NONE;
+    vPortFree(uart_data_paramp);
   }
 }
 /**
