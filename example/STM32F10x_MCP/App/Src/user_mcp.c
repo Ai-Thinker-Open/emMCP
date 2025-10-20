@@ -24,19 +24,100 @@ static void setLEDRequestHandler(void *arguments)
 	cJSON *enabled = emMCP_GetParam(params, "enable");
 	if (enabled != NULL)
 	{
-		log_info("set led enabled:%d", enabled->valueint);
 		HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, enabled->valueint ? GPIO_PIN_RESET : GPIO_PIN_SET);
-		osDelay(10);
-		emMCP_ResponseValue(enabled->valueint ? "true" : "false");
+		int ret = emMCP_ResponseValue(emMCP_CTRL_OK); // 返回控制成功
+		if (ret != 0)
+		{
+			log_error("response error");
+		}
+		else
+		{
+			log_info("response success");
+		}
 	}
 	else
 	{
-		char *value = cJSON_PrintUnformatted(params);
-		log_error("get param error, params:%s", value);
-		cJSON_free(value);
+		int ret = emMCP_ResponseValue(emMCP_CTRL_ERROR); // 返回控制失败
+		if (ret != 0)
+		{
+			log_error("response error");
+		}
+		else
+		{
+			log_info("response success");
+		}
 	}
 }
-
+void emMCP_EventCallback(emMCP_event_t event, mcp_server_tool_type_t type, void *param)
+{
+	switch (event)
+	{
+	case emMCP_EVENT_CMD_OK:
+	{
+		log_info("emMCP_EVENT_CMD_OK");
+		HeapStats_t heap;
+		vPortGetHeapStats(&heap);
+		log_info("%d", heap.xAvailableHeapSpaceInBytes);
+	}
+	break;
+	case emMCP_EVENT_CMD_ERROR:
+	{
+		log_error("emMCP_EVENT_CMD_ERROR");
+	}
+	break;
+	case emMCP_EVENT_AI_START:
+	{
+		log_info("emMCP_EVENT_AI_START");
+	}
+	break;
+	case emMCP_EVENT_AI_NETCFG:
+	{
+		log_info("emMCP_EVENT_AI_NETCFG");
+	}
+	break;
+	case emMCP_EVENT_AI_NETERR:
+	{
+		log_info("emMCP_EVENT_AI_NETERR");
+	}
+	break;
+	case emMCP_EVENT_AI_WIFI_CONNNECT:
+	{
+		log_info("emMCP_EVENT_AI_WIFI_CONNNECT");
+	}
+	break;
+	case emMCP_EVENT_AI_WIFI_DISCONNECT:
+	{
+		log_info("emMCP_EVENT_AI_WIFI_DISCONNECT");
+	}
+	break;
+	case emMCP_EVENT_AI_WAKE:
+	{
+		log_info("emMCP_EVENT_AI_WAKE");
+		HeapStats_t heap;
+		vPortGetHeapStats(&heap);
+		log_info("%d", heap.xAvailableHeapSpaceInBytes);
+	}
+	break;
+	case emMCP_EVENT_AI_SLEEP:
+	{
+		log_info("emMCP_EVENT_AI_SLEEP");
+	}
+	break;
+	case emMCP_EVENT_AI_MCP_CMD:
+	{
+		log_info("emMCP_EVENT_AI_MCP_CMD:%s", (char *)param);
+		HeapStats_t heap;
+		vPortGetHeapStats(&heap);
+		log_info("%d", heap.xAvailableHeapSpaceInBytes);
+	}
+	break;
+	case emMCP_EVENT_AI_MCP_Text:
+		log_info("emMCP_EVENT_AI_MCP_Text:%s", (char *)param);
+		break;
+	default:
+		break;
+	}
+}
 void user_mcp_init(void)
 {
 	emMCP_Init(&emMCP_dev);
@@ -46,7 +127,7 @@ void user_mcp_init(void)
 	led_tool.inputSchema.properties[0].description = "LED switch, true:on, false:off, when queried, attribute is null";
 	led_tool.inputSchema.properties[0].type = MCP_SERVER_TOOL_TYPE_BOOLEAN;
 	led_tool.setRequestHandler = setLEDRequestHandler;
-	
+
 	air_tool.name = "空调开关";
 	air_tool.description = "空调开关工具";
 	air_tool.inputSchema.properties[0].name = "enable";

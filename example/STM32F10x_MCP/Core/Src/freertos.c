@@ -67,7 +67,7 @@ const osThreadAttr_t LED_Blank_attributes = {
 osThreadId_t log_send_taskHandle;
 const osThreadAttr_t log_send_task_attributes = {
     .name = "log_send_task",
-    .stack_size = 256 * 4,
+    .stack_size = 512 * 4,
     .priority = (osPriority_t)osPriorityLow1,
 };
 

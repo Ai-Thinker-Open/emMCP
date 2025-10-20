@@ -53,8 +53,8 @@ file(GLOB_RECURSE SRC_FILES
 "App/Src/*.c"
 "../../port/*.c" 
 "../../uart-mcp/*.c"
-"../../uart-mcp/components/*.c"
-"../../uart-mcp/components/cJSON/*.c"
+"../../uart-mcp/*.c"
+"../../uart-mcp/cJSON/*.c"
 
 )
 
@@ -70,7 +70,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     App/Inc
     ../../port
     ../../uart-mcp
-    ../../uart-mcp/components/cJSON
+    ../../uart-mcp/cJSON
 
 )
 

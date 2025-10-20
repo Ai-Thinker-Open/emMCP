@@ -14,7 +14,7 @@
 
 #include <uartPort.h>
 
-#ifdef emMCP_printf
+
 #define ANSI_COLOR_RESET "\033[0m"
 #define ANSI_COLOR_GREEN "\033[32m"
 #define ANSI_COLOR_RED "\033[31m"
@@ -34,6 +34,7 @@ typedef enum
 } emMCP_LogLevel;
 
 extern emMCP_LogLevel log_level;
+#ifdef emMCP_printf
 // 日志输出宏定义
 #define emMCP_log_debug(...)                                               \
   do                                                                       \

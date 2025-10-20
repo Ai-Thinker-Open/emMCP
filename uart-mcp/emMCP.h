@@ -24,6 +24,9 @@
 #define MCP_SERVER_TOOL_METHODS_NUM 5			 // 方法数量
 #define MCP_SERVER_TOOL_METHODS_PARAMETERS_NUM 5 // 方法参数数量
 
+#define emMCP_CTRL_OK "true"
+#define emMCP_CTRL_ERROR "false"
+
 #define __emMCPWeak __attribute__((weak)) // 弱函数
 /**
  * @brief MCP 服务器工具类型枚举
@@ -169,6 +172,26 @@ int emMCP_RegistrationTools(void);
  * @return int
  */
 int emMCP_SetBaudrate(uint16_t baudrate);
+/**
+ * @brief 唤醒模组并设置唤醒时间
+ *
+ * @param WakeUp_Time
+ * @return int
+ */
+int emMCP_SetAiWakeUp(uint8_t WakeUp_Time);
+/**
+ * @brief 设置AI音量
+ *
+ * @param volume
+ * @return int
+ */
+int emMCP_SetAiVolume(uint8_t volume);
+/**
+ * @brief 获取AI音量
+ * 
+ * @return uint8_t 
+ */
+uint8_t emMCP_CheckAiVolume(void);
 /**
  * @brief 检查串口发送状态
  *

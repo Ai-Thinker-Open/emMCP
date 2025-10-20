@@ -19,7 +19,6 @@
  *
  */
 #include "log.h"
-
 /**
  * @brief  系统内存头文件
  *
@@ -30,13 +29,11 @@
  * @brief 定义串口打印函数
  *
  */
-
 #define emMCP_printf log_printf
 /**
  * @brief 定义内存操作函数
  *
  */
-
 #define emMCP_malloc pvPortMalloc
 #define emMCP_free vPortFree
 /**
@@ -44,7 +41,6 @@
  *
  */
 #define emMCP_delay osDelay
-
 #ifndef emMCP_delay
 #error "emMCP_delay is not defined"
 #endif

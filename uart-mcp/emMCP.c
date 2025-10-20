@@ -33,11 +33,8 @@ static char *mcp_sever_type_str[MCP_SERVER_TOOL_TYPE_MAX] = {"true", "false", "n
  * @brief emMCP 日志等级
  *
  */
-#ifdef DEBUG
 emMCP_LogLevel log_level = emMCP_LOG_LEVEL_DEBUG;
-#else
-emMCP_LogLevel log_level = emMCP_LOG_LEVEL_INFO;
-#endif
+
 /**
  * @brief emMCP 串口数据缓存区
  *
@@ -59,6 +56,11 @@ emMCP_t *emMCP_dev = NULL;
  */
 static int delay_time = 10;
 /**
+ * @brief emMCP 小安AI 音量值
+ *
+ */
+static uint8_t emMCP_AiVolume = 0;
+/**
  * @brief 函数声明区
  */
 static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type);
@@ -71,8 +73,8 @@ static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type);
  */
 __emMCPWeak void emMCP_EventCallback(emMCP_event_t event, mcp_server_tool_type_t type, void *param)
 {
-
-  emMCP_log_debug("emMCP_EventCallback: event:%d,type:%d,param:%s", event, type, (char *)param);
+  char *param_str = (char *)param;
+  emMCP_log_debug("emMCP_EventCallback: event:%d,type:%d,param:%s", event, type, param_str);
 }
 /**
  * @brief emMCP 设置回调函数提醒，如果你没有设置回调函数，该工具的检查函数都会调用这个函数
@@ -82,9 +84,8 @@ __emMCPWeak void emMCP_EventCallback(emMCP_event_t event, mcp_server_tool_type_t
  */
 static void emMCP_Set_CMDCallback(void *arg)
 {
-
-  emMCP_log_warn("Please set the callback function of the %s", (char *)arg);
-  emMCP_ResponseValue("false");
+  emMCP_log_warn("Please set the callback function");
+  emMCP_ResponseValue(emMCP_CTRL_ERROR);
 }
 /**
  * @brief emMCP 检查回调函数提醒，如果你没有设置回调函数，该工具的检查函数都会调用这个函数
@@ -93,9 +94,8 @@ static void emMCP_Set_CMDCallback(void *arg)
  */
 static void emMCP_check_CMDCallback(void *arg)
 {
-
-  emMCP_log_warn("Please set the callback function of the %s", (char *)arg);
-  emMCP_ResponseValue("false");
+  emMCP_log_warn("Please set the callback function");
+  emMCP_ResponseValue(emMCP_CTRL_ERROR);
 }
 /**
  * @brief emMCP 初始化
@@ -149,7 +149,6 @@ int emMCP_AddToolToToolList(emMCP_tool_t *tool)
 
   if (mcp_tool_arry[0].name == NULL)
   {
-    emMCP_log_debug("tools:\"%s\" add %d", tmp_tool->name, 0);
     memcpy(&mcp_tool_arry[0], tmp_tool, sizeof(emMCP_tool_t));
   }
   else
@@ -158,7 +157,6 @@ int emMCP_AddToolToToolList(emMCP_tool_t *tool)
     {
       if (mcp_tool_arry[i].name == NULL)
       {
-        emMCP_log_debug("tools:\"%s\" add %d", tmp_tool->name, i);
         memcpy(&mcp_tool_arry[i], tmp_tool, sizeof(emMCP_tool_t));
         break;
       }
@@ -297,8 +295,6 @@ static void emMCP_ResponsiveToolRequest(char *tool_name, cJSON *arguments)
     }
   }
 
-  // for (int i = 0; i < tools_numble; i++)
-  // {
   if (strcmp(mcp_tool_arry[tools_numble].name, tool_name) == 0)
   {
     // 判断是否为 methods 参数
@@ -310,37 +306,16 @@ static void emMCP_ResponsiveToolRequest(char *tool_name, cJSON *arguments)
       if (cJSON_GetObjectItem(arguments, "methods") != NULL)
       {
         cJSON *method = cJSON_GetObjectItem(cJSON_GetObjectItem(arguments, "methods"), mcp_tool_arry[tools_numble].inputSchema.methods[0].name);
-        if (mcp_tool_arry[tools_numble].setRequestHandler != NULL)
-        {
-          mcp_tool_arry[tools_numble].setRequestHandler(method == NULL ? arguments : method);
-        }
-        else
-        {
-          mcp_tool_arry[tools_numble].setRequestHandler(mcp_tool_arry[tools_numble].name);
-        }
+        mcp_tool_arry[tools_numble].setRequestHandler(method == NULL ? arguments : method);
       }
       else if (cJSON_GetObjectItem(arguments, mcp_tool_arry[tools_numble].inputSchema.methods[0].parameters[0].name) != NULL)
       {
         cJSON *method = cJSON_GetObjectItem(arguments, mcp_tool_arry[tools_numble].inputSchema.methods[0].parameters[0].name);
-        if (mcp_tool_arry[tools_numble].setRequestHandler != NULL)
-        {
-          mcp_tool_arry[tools_numble].setRequestHandler(method == NULL ? arguments : method);
-        }
-        else
-        {
-          mcp_tool_arry[tools_numble].setRequestHandler(mcp_tool_arry[tools_numble].name);
-        }
+        mcp_tool_arry[tools_numble].setRequestHandler(method == NULL ? arguments : method);
       }
       else
       {
-        if (mcp_tool_arry[tools_numble].setRequestHandler != NULL)
-        {
-          mcp_tool_arry[tools_numble].setRequestHandler(arguments);
-        }
-        else
-        {
-          mcp_tool_arry[tools_numble].setRequestHandler(mcp_tool_arry[tools_numble].name);
-        }
+        mcp_tool_arry[tools_numble].setRequestHandler(arguments);
       }
     }
     else if (cJSON_GetObjectItem(arguments, mcp_tool_arry[tools_numble].inputSchema.properties[0].name) != NULL || arguments->child == NULL)
@@ -349,32 +324,15 @@ static void emMCP_ResponsiveToolRequest(char *tool_name, cJSON *arguments)
 
       if (prop != NULL && prop->type != cJSON_NULL)
       {
-        if (mcp_tool_arry[tools_numble].setRequestHandler != NULL)
-        {
-          emMCP_log_debug("setRequestHandler");
-          mcp_tool_arry[tools_numble].setRequestHandler(arguments);
-        }
-        else
-        {
-          mcp_tool_arry[tools_numble].setRequestHandler(mcp_tool_arry[tools_numble].name);
-        }
+        mcp_tool_arry[tools_numble].setRequestHandler(arguments);
       }
       else
       {
-        if (mcp_tool_arry[tools_numble].checkRequestHandler != NULL)
-        {
-          mcp_tool_arry[tools_numble].checkRequestHandler(arguments);
-        }
-        else
-        {
-          mcp_tool_arry[tools_numble].checkRequestHandler(mcp_tool_arry[tools_numble].name);
-        }
+        mcp_tool_arry[tools_numble].checkRequestHandler(arguments);
       }
     }
     return;
   }
-  // }
-  // 回调
 }
 /**
  * @brief 根据参数名称，获取参数
@@ -418,7 +376,7 @@ int emMCP_RegistrationTools(void)
   {
     memset(cmd, 0, strlen(emMCP_dev->tools_str) + 64);
     sprintf(cmd, "mcp-tool {\"role\":\"MCU\",\"msgType\":\"MCP\",\"MCP\":%s}\r\n", emMCP_dev->tools_str);
-    emMCP_log_debug("send cmd = %s", cmd);
+
     memset(uart_data_buf, 0, sizeof(uart_data_buf));
     uartPortSendData(cmd, strlen(cmd));
   }
@@ -441,15 +399,13 @@ static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type)
 
   if (strlen(uart_data_buf) == 0)
   {
-    emMCP_log_error("emMCP_return_event: uart_data_buf is empty");
+
     return emMCP_EVENT_NONE;
   }
   // 检查串口数据是否为json格式
   cJSON *root = cJSON_Parse(uart_data_buf);
   if (root == NULL)
   {
-    emMCP_log_error(uart_data_buf);
-    emMCP_log_error("emMCP_return_event: uart_data_buf is not json format");
 
     return emMCP_EVENT_NONE;
   }
@@ -457,7 +413,7 @@ static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type)
   cJSON *role = cJSON_GetObjectItem(root, "role");
   if (role == NULL || strcmp(role->valuestring, "AI board") != 0)
   {
-    emMCP_log_error("emMCP_return_event: uart_data_buf is not AI device data");
+
     cJSON_Delete(root);
     return emMCP_EVENT_NONE;
   }
@@ -472,6 +428,11 @@ static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type)
     {
       if (strcmp(msgType_param->valuestring, "OK") == 0)
       {
+        cJSON *status_parm = cJSON_GetObjectItem(root, "volume");
+        if (status_parm != NULL && status_parm->type == cJSON_Number)
+        {
+          emMCP_AiVolume = status_parm->valueint;
+        }
         emMCP_event = emMCP_EVENT_CMD_OK;
       }
       else if (strncmp(msgType_param->valuestring, "ERROR", 5) == 0)
@@ -523,7 +484,7 @@ static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type)
     msgType_param = cJSON_GetObjectItem(root, "MCP");
     if (msgType_param == NULL || msgType_param->type != cJSON_Object)
     {
-      emMCP_log_error("emMCP_return_event: uart_data_buf is not AI device data");
+
       cJSON_Delete(root);
       memset(uart_data_paramp, 0, sizeof(uart_data_paramp));
       return emMCP_EVENT_NONE;
@@ -548,7 +509,7 @@ static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type)
     msgType_param = cJSON_GetObjectItem(root, "MCP Text");
     if (msgType_param == NULL || msgType_param->type != cJSON_Object)
     {
-      emMCP_log_error("emMCP_return_event: uart_data_buf is not AI device data");
+
       cJSON_Delete(root);
       memset(uart_data_paramp, 0, sizeof(uart_data_paramp));
       return emMCP_EVENT_NONE;
@@ -635,6 +596,78 @@ int emMCP_SetBaudrate(uint16_t baudrate)
   return 0;
 }
 /**
+ * @brief emMCP 设置唤醒
+ *
+ * @return int
+ */
+int emMCP_SetAiWakeUp(uint8_t WakeUp_Time)
+{
+  char cmd[128] = {0};
+  memset(cmd, 0, sizeof(cmd));
+  sprintf(cmd, "wake-up {\"role\":\"MCU\",\"msgType\":\"wake-up\",\"wake-up\":\"%d\"}\r\n", WakeUp_Time);
+  int ret = uartPortSendData(cmd, strlen(cmd));
+  if (ret > 0)
+  {
+    return -1;
+  }
+  else
+  {
+    return 0;
+  }
+}
+/**
+ * @brief emMCP 设置音量
+ *
+ * @param volume
+ * @return int
+ */
+int emMCP_SetAiVolume(uint8_t volume)
+{
+  if (volume > 100)
+  {
+    return -1;
+  }
+  char cmd[128] = {0};
+  memset(cmd, 0, sizeof(cmd));
+  sprintf(cmd, "volume-set {\"role\":\"MCU\",\"msgType\":\"status\",\"status\":\"%d\"}\r\n", volume);
+  int ret = uartPortSendData(cmd, strlen(cmd));
+  if (ret > 0)
+  {
+    return -1;
+  }
+  else
+  {
+    return 0;
+  }
+}
+/**
+ * @brief emMCP 获取音量
+ *
+ * @return uint8_t
+ */
+uint8_t emMCP_CheckAiVolume(void)
+{
+  char cmd[128] = {0};
+  memset(cmd, 0, sizeof(cmd));
+  sprintf(cmd, "volume-check {\"role\":\"MCU\",\"msgType\":\"status\"}\r\n");
+  int ret = uartPortSendData(cmd, strlen(cmd));
+  if (ret > 0)
+  {
+    return -1;
+  }
+  int timerout = 0;
+  while (!emMCP_CheckUartSendStatus() && timerout < 4000 / delay_time)
+  {
+    emMCP_delay(delay_time);
+    timerout++;
+  }
+  if (timerout >= 4000 / 10)
+  {
+    return -1;
+  }
+  return emMCP_AiVolume;
+}
+/**
  * @brief emMCP 响应控制结果
  *
  * @param value
@@ -649,17 +682,5 @@ int emMCP_ResponseValue(char *value)
   char cmd[128] = {0};
   memset(cmd, 0, sizeof(cmd));
   sprintf(cmd, "mcp-responsive {\"role\":\"MCU\",\"msgType\":\"status\",\"status\":\"%s\"}\r\n", value);
-  uartPortSendData(cmd, strlen(cmd));
-  // 等待AI设备返回结果
-  int timerout = 0;
-  while (!emMCP_CheckUartSendStatus() && timerout < 4000 / delay_time)
-  {
-    emMCP_delay(delay_time);
-    timerout++;
-  }
-  if (timerout >= 4000 / delay_time)
-  {
-    return -1;
-  }
-  return 0;
+  return uartPortSendData(cmd, strlen(cmd));
 }
