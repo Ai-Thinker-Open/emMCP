@@ -15,6 +15,7 @@
 #include <string.h>
 
 /* Private includes ----------------------------------------------------------*/
+#include "usart.h"
 
 /**
  * @brief 串口发送函数接口
@@ -30,8 +31,8 @@ int uartPortSendData(char *data, int len)
     {
         return -1;
     }
-
-    return 0; // 返回发送状态
+    emMCP_log_debug("uartPortSendData: %s", data);
+    return HAL_UART_Transmit(&huart2, (uint8_t *)data, len, 100);
 }
 /**
  * @brief 串口接收函数接口,把这个函数在串口接收中断或接收循环中调用

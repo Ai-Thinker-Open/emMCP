@@ -23,23 +23,24 @@
  * @brief  系统内存头文件
  *
  */
-
+#include "FreeRTOS.h"
+#include "cmsis_os.h"
 /**
  * @brief 定义串口打印函数
  *
  */
-#define emMCP_printf
+#define emMCP_printf log_printf
 /**
  * @brief 定义内存操作函数
  *
  */
-#define emMCP_malloc
-#define emMCP_free
+#define emMCP_malloc pvPortMalloc
+#define emMCP_free vPortFree
 /**
  * @brief 定义延时函数
  *
  */
-// #define emMCP_delay
+#define emMCP_delay osDelay
 #ifndef emMCP_delay
 #error "emMCP_delay is not defined"
 #endif
