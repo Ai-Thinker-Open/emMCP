@@ -112,4 +112,16 @@ int main(void)
 	}
 }
 ```
+### 6. 是否移植成功？
+
+完成以上步骤之后，编译你的项目，确保编译成功，并且没有报错。按照以下步骤验证是否移植OK：
+
+- 下载程序到MCU 
+- 对 AI 模组说“你好小安”
+- 观察串口输出，如果看到类似以下输出，则表示 emMCP 已经成功移植到你的 MCU 上：
+
+```bash
+[DEBUG] emMCP_EventCallback:78: emMCP_EventCallback: event:8,type:4,param:2.WakeUP
+```
+
 ## MCP 交互请参考 [emMCP使用文档](https://docs.ai-thinker.com/uart_mcp/)

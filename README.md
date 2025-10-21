@@ -113,6 +113,13 @@ int main(void)
 	}
 }
 ```
-
+### 6. Has the porting been successful?
+After completing the above steps, compile your project to ensure it compiles successfully without errors. Follow the steps below to verify if the porting is successful:
+- Download the program to the MCU
+- Say "Hello Xiao'an" to the AI module
+- Observe the serial port output. If you see output similar to the following, it indicates that emMCP has been successfully ported to your MCU:
+	```bash
+	[DEBUG] emMCP_EventCallback:78: emMCP_EventCallback: event:8,type:4,param:2.WakeUP
+	```
 ## For MCP interaction, please refer to [emMCP User Documentation](https://docs.ai-thinker.com/uart_mcp/)
 
