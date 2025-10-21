@@ -105,18 +105,13 @@ void user_mcp_init(void) {
   led_tool.inputSchema.properties[0].type = MCP_SERVER_TOOL_TYPE_BOOLEAN;
   led_tool.setRequestHandler = setLEDRequestHandler;
 
-  // air_tool.name = "空调开关";
-  // air_tool.description = "空调开关工具";
-  // air_tool.inputSchema.properties[0].name = "enable";
-  // air_tool.inputSchema.properties[0].description = "空调开关，true:on,
-  // false:off, when queried, attribute is null";
-  // air_tool.inputSchema.properties[0].type = MCP_SERVER_TOOL_TYPE_BOOLEAN;
+
   int ret = emMCP_AddToolToToolList(&led_tool);
   if (ret != 0) {
     log_error("add tool failed");
     return;
   }
-  // ret = emMCP_AddToolToToolList(&air_tool);
+
   if (ret != 0) {
     log_error("add tool failed");
   }

@@ -553,13 +553,13 @@ void emMCP_TickHandle(int delay_ms)
   if (emMCP_dev->isUartRecv)
   {
     mcp_server_tool_type_t _param_type = MCP_SERVER_TOOL_TYPE_STRING;
-    emMCP_ReturnEvent(&_param_type);
-    uart_data_paramp = pvPortMalloc(256);
+    uart_data_paramp = emMCP_malloc(256);
     memset(uart_data_paramp, 0, 256);
+    emMCP_ReturnEvent(&_param_type);
     emMCP_dev->emMCPEventCallback(emMCP_event, _param_type, uart_data_paramp);
     emMCP_dev->isUartRecv = 0;
     emMCP_event = emMCP_EVENT_NONE;
-    vPortFree(uart_data_paramp);
+    emMCP_free(uart_data_paramp);
   }
 }
 /**

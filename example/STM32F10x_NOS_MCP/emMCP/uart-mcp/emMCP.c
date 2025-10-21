@@ -9,7 +9,6 @@
  *
  */
 #include "emMCP.h"
-#include "FreeRTOS.h"
 #include "uartPort.h"
 #include <stddef.h>
 #include <stdio.h>
@@ -46,7 +45,7 @@ char *uart_data_buf = NULL;
  * @brief emMCP 串口数据参数缓存区
  *
  */
-static char *uart_data_paramp = NULL;
+char *uart_data_paramp = NULL;
 /**
  * @brief emMCP 工具注册标志
  *
@@ -75,9 +74,9 @@ static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type);
  */
 __emMCPWeak void emMCP_EventCallback(emMCP_event_t event,
                                      mcp_server_tool_type_t type, void *param) {
-
+  char *param_str = (char *)param;
   emMCP_log_debug("emMCP_EventCallback: event:%d,type:%d,param:%s", event, type,
-                  (char *)param);
+                  param_str);
 }
 /**
  * @brief emMCP
@@ -383,8 +382,6 @@ int emMCP_RegistrationTools(void) {
     sprintf(cmd,
             "mcp-tool {\"role\":\"MCU\",\"msgType\":\"MCP\",\"MCP\":%s}\r\n",
             emMCP_dev->tools_str);
-
-    // memset(uart_data_buf, 0, sizeof(uart_data_buf));
     uartPortSendData(cmd, strlen(cmd));
   }
   emMCP_free(cmd);
@@ -460,7 +457,6 @@ static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type) {
     *param_type = MCP_SERVER_TOOL_TYPE_OBJECT;
     msgType_param = cJSON_GetObjectItem(root, "MCP");
     if (msgType_param == NULL || msgType_param->type != cJSON_Object) {
-
       cJSON_Delete(root);
       return emMCP_EVENT_NONE;
     }
@@ -484,21 +480,16 @@ static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type) {
       return emMCP_EVENT_NONE;
     }
   }
-
-  // _exit:
   if (emMCP_event != emMCP_EVENT_NONE) {
-    memset(uart_data_paramp, 0, sizeof(uart_data_paramp));
-    if (*param_type == MCP_SERVER_TOOL_TYPE_STRING)
+    if (*param_type == MCP_SERVER_TOOL_TYPE_STRING) {
       strcpy(uart_data_paramp, msgType_param->valuestring);
-    else {
+    } else {
       char *param_str = cJSON_PrintUnformatted(msgType_param);
       strcpy(uart_data_paramp, param_str);
       cJSON_free(param_str);
     }
   }
-
   cJSON_Delete(root);
-
   return emMCP_event;
 }
 /**
@@ -520,16 +511,15 @@ void emMCP_TickHandle(int delay_ms) {
   if (delay_ms != delay_time) {
     delay_time = delay_ms;
   }
-
   if (emMCP_dev->isUartRecv) {
     mcp_server_tool_type_t _param_type = MCP_SERVER_TOOL_TYPE_STRING;
-    emMCP_ReturnEvent(&_param_type);
-    uart_data_paramp = pvPortMalloc(256);
+    uart_data_paramp = emMCP_malloc(256);
     memset(uart_data_paramp, 0, 256);
+    emMCP_ReturnEvent(&_param_type);
     emMCP_dev->emMCPEventCallback(emMCP_event, _param_type, uart_data_paramp);
     emMCP_dev->isUartRecv = 0;
     emMCP_event = emMCP_EVENT_NONE;
-    vPortFree(uart_data_paramp);
+    emMCP_free(uart_data_paramp);
   }
 }
 /**
