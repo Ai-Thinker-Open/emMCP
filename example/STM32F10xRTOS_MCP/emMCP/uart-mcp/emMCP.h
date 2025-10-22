@@ -106,14 +106,13 @@ typedef struct
  * @brief MCP 服务器工具结构体
  *
  */
-typedef struct emMCP_tool
+typedef struct
 {
 	char *name;							 // 工具名称
 	char *description;					 // 工具描述
 	void (*setRequestHandler)(void *);	 // 工具回调函数
 	void (*checkRequestHandler)(void *); // 工具回调函数
 	inputSchema_t inputSchema;			 // 输入参数
-	struct emMCP_tool *next;			 // 下一个工具
 } emMCP_tool_t;
 /**
  * @brief emMCP 结构体
@@ -132,7 +131,7 @@ typedef struct
 /***
  * @brief emMCP 串口数据缓存
  */
-extern char* uart_data_buf;
+extern char *uart_data_buf;
 /**
  * @brief 初始化MCP服务器
  *
@@ -191,8 +190,8 @@ int emMCP_SetAiWakeUp(uint8_t WakeUp_Time);
 int emMCP_SetAiVolume(uint8_t volume);
 /**
  * @brief 获取AI音量
- * 
- * @return uint8_t 
+ *
+ * @return uint8_t
  */
 uint8_t emMCP_CheckAiVolume(void);
 /**

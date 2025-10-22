@@ -18,11 +18,14 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "cJSON.h"
 #include "dma.h"
 #include "emMCP.h"
 #include "gpio.h"
+#include "stm32f103xb.h"
 #include "stm32f1xx_hal.h"
 #include "stm32f1xx_hal_dma.h"
+#include "stm32f1xx_hal_gpio.h"
 #include "stm32f1xx_hal_uart.h"
 #include "usart.h"
 #include <stdint.h>
@@ -57,28 +60,44 @@ uint8_t rxBuffer[UART_RXBUFF_MAX] = {0};
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
-{
-  if (huart == &huart2)
-  {
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
+  if (huart == &huart2) {
     uartPortRecvData((char *)rxBuffer, Size);
     HAL_UARTEx_ReceiveToIdle_DMA(&huart2, rxBuffer, UART_RXBUFF_MAX);
     __HAL_DMA_DISABLE_IT(&hdma_usart2_rx, DMA_IT_HT);
   }
 }
+
+static void emMCP_SetLEDHandler(void *arg) {
+  // 接收到的数据
+  cJSON *param = (cJSON *)arg;
+  // 控制LED灯
+  cJSON *enable = cJSON_GetObjectItem(param, "enable");
+  if (enable != NULL) {
+    if (enable->valueint == 1) {
+      HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET);
+    } else if (enable->valueint == 0) {
+      HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET);
+    }
+    emMCP_ResponseValue(emMCP_CTRL_OK);
+  } else {
+    emMCP_ResponseValue(emMCP_CTRL_ERROR);
+  }
+}
+
+static void emMCP_GetLEDHandler(void *arg) {}
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+emMCP_tool_t led;
 /* USER CODE END 0 */
 
 /**
  * @brief  The application entry point.
  * @retval int
  */
-int main(void)
-{
+int main(void) {
 
   /* USER CODE BEGIN 1 */
 
@@ -113,14 +132,24 @@ int main(void)
 
   // 初始化MCP
   emMCP_Init(&emMCP);
-  log_info("Hello world"); // 打印日志
+  led.name = "LED灯";
+  led.description = "用来控制LED灯的亮灭";
+  led.inputSchema.properties[0].name = "enable";
+  led.inputSchema.properties[0].description =
+      "控制LED灯,打开:true,关闭为:false,查询为null";
+  led.inputSchema.properties[0].type = MCP_SERVER_TOOL_TYPE_BOOLEAN;
+  led.setRequestHandler = emMCP_SetLEDHandler;
+  led.checkRequestHandler = emMCP_GetLEDHandler;
+  emMCP_AddToolToToolList(&led);
+  // 注册工具
+  emMCP_RegistrationTools();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
-  {
+  while (1) {
     /* USER CODE END WHILE */
+    // 执行状态机
     emMCP_TickHandle(100);
     /* USER CODE BEGIN 3 */
   }
@@ -131,8 +160,7 @@ int main(void)
  * @brief System Clock Configuration
  * @retval None
  */
-void SystemClock_Config(void)
-{
+void SystemClock_Config(void) {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
@@ -145,8 +173,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI_DIV2;
   RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL16;
-  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-  {
+  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
     Error_Handler();
   }
 
@@ -159,8 +186,7 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
-  {
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK) {
     Error_Handler();
   }
 }
@@ -173,13 +199,11 @@ void SystemClock_Config(void)
  * @brief  This function is executed in case of error occurrence.
  * @retval None
  */
-void Error_Handler(void)
-{
+void Error_Handler(void) {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
-  while (1)
-  {
+  while (1) {
   }
   /* USER CODE END Error_Handler_Debug */
 }
@@ -191,8 +215,7 @@ void Error_Handler(void)
  * @param  line: assert_param error line source number
  * @retval None
  */
-void assert_failed(uint8_t *file, uint32_t line)
-{
+void assert_failed(uint8_t *file, uint32_t line) {
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line
      number, ex: printf("Wrong parameters value: file %s on line %d\r\n", file,
