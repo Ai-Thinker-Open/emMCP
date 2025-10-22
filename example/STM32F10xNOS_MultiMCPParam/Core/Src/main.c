@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "cJSON.h"
 #include "dma.h"
 #include "gpio.h"
 #include "stm32f1xx_hal_uart.h"
@@ -28,6 +29,7 @@
 /* USER CODE BEGIN Includes */
 #include "emMCP.h"
 #include <stdint.h>
+#include <stdlib.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -44,7 +46,7 @@
 /* USER CODE BEGIN PM */
 uint8_t RxBuffer[UART_RXBUFFER_SIZE] = {0};
 emMCP_t emMCP;
-
+emMCP_tool_t rgb; // 创建工具
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -68,7 +70,39 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+void emMCP_SetRGBHandler(void *arg) {
+  cJSON *param = (cJSON *)arg;
+  cJSON *enable = cJSON_GetObjectItem(param, "enable");
+  cJSON *ch_red = cJSON_GetObjectItem(param, "red");
+  cJSON *ch_green = cJSON_GetObjectItem(param, "green");
+  cJSON *ch_blue = cJSON_GetObjectItem(param, "blue");
+  if (enable != NULL) {
+    if (cJSON_IsTrue(enable)) {
+      log_info("RGB enable is true");
+    } else {
+      log_info("RGB enable is false");
+    }
+  }
+  if (ch_red != NULL) {
+    log_info("RGB red is %d", ch_red->valueint);
+  }
+  if (ch_green != NULL) {
+    log_info("RGB green is %d", ch_green->valueint);
+  }
+  if (ch_blue != NULL) {
+    log_info("RGB blue is %d", ch_blue->valueint);
+  }
+  // 返回控制结果
+  char *result = malloc(128);
+  sprintf(result, " {\"%s\":%s,\"%s\":%d,\"%s\":%d,\"%s\":%d}}", enable->string,
+          enable->valueint ? "true" : "false", ch_red->string, ch_red->valueint,
+          ch_green->string, ch_green->valueint, ch_blue->string,
+          ch_blue->valueint);
+  emMCP_ResponseValue(result);
+  free(result);
+}
 
+void emMCP_GetRGBHandler(void *arg) {}
 /* USER CODE END 0 */
 
 /**
@@ -81,9 +115,11 @@ int main(void) {
 
   /* USER CODE END 1 */
 
-  /* MCU Configuration--------------------------------------------------------*/
+  /* MCU
+   * Configuration--------------------------------------------------------*/
 
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick.
+  /* Reset of all peripherals, Initializes the Flash interface and the
+   * Systick.
    */
   HAL_Init();
 
@@ -109,7 +145,50 @@ int main(void) {
   __HAL_DMA_DISABLE_IT(huart2.hdmarx, DMA_IT_HT);
 
   emMCP_Init(&emMCP);
-  emMCP_SetAiVolume(50);
+  // emMCP_SetAiVolume(50);
+  emMCP_CheckAiVolume();
+  rgb.name = "RGB彩灯";                      // 工具名称，保持唯一性
+  rgb.description = "用来控制RGB彩灯的亮灭"; // 工具的功能描述
+  rgb.inputSchema.properties[0].name =
+      "enable"; // 属性指令，AI 通过这个指令发送命令
+  rgb.inputSchema.properties[0].description =
+      "是否打开RGB彩灯,true表示打开，false表示关闭,"
+      "查询时为null"; // 指令描述，AI 通过这个描述理解指令
+  rgb.inputSchema.properties[0].type =
+      MCP_SERVER_TOOL_TYPE_BOOLEAN; // 指令类型，AI
+                                    // 通过这个类型发送相对应的数据
+
+  rgb.inputSchema.properties[1].name =
+      "red"; // 属性指令，AI 通过这个指令发送命令
+  rgb.inputSchema.properties[1].description =
+      "RGB彩灯的红色,范围0-255,查询时为null"; // 指令描述，AI
+                                              // 通过这个描述理解指令
+  rgb.inputSchema.properties[1].type =
+      MCP_SERVER_TOOL_TYPE_NUMBER; // 指令类型，AI
+                                   // 通过这个类型发送相对应的数据
+
+  rgb.inputSchema.properties[2].name =
+      "green"; // 属性指令，AI 通过这个指令发送命令
+  rgb.inputSchema.properties[2].description =
+      "RGB彩灯的绿色,范围0-255,查询时为null"; // 指令描述，AI
+                                              // 通过这个描述理解指令
+  rgb.inputSchema.properties[2].type =
+      MCP_SERVER_TOOL_TYPE_NUMBER; // 指令类型，AI
+                                   // 通过这个类型发送相对应的数据
+
+  rgb.inputSchema.properties[3].name =
+      "blue"; // 属性指令，AI 通过这个指令发送命令
+  rgb.inputSchema.properties[3].description =
+      "RGB彩灯的蓝色,范围0-255,查询时为null"; // 指令描述，AI
+                                              // 通过这个描述理解指令
+  rgb.inputSchema.properties[3].type =
+      MCP_SERVER_TOOL_TYPE_NUMBER;               // 指令类型，AI
+                                                 // 通过这个类型发送相对应的数据
+  rgb.setRequestHandler = emMCP_SetRGBHandler;   // 设置控制回调
+  rgb.checkRequestHandler = emMCP_GetRGBHandler; // 设置查询回调
+
+  emMCP_AddToolToToolList(&rgb); // 添加工具到工具列表
+  emMCP_RegistrationTools();     // 注册工具到小安AI
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -167,7 +246,8 @@ void SystemClock_Config(void) {
  */
 void Error_Handler(void) {
   /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
+  /* User can add his own implementation to report the HAL error return state
+   */
   __disable_irq();
   while (1) {
   }
@@ -184,8 +264,8 @@ void Error_Handler(void) {
 void assert_failed(uint8_t *file, uint32_t line) {
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line
-     number, ex: printf("Wrong parameters value: file %s on line %d\r\n", file,
-     line) */
+     number, ex: printf("Wrong parameters value: file %s on line %d\r\n",
+     file, line) */
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */

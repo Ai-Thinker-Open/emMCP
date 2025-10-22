@@ -9,6 +9,7 @@
  *
  */
 #include "emMCP.h"
+#include "cJSON.h"
 #include "uartPort.h"
 #include <stddef.h>
 #include <stdio.h>
@@ -405,6 +406,7 @@ static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type) {
 
     return emMCP_EVENT_NONE;
   }
+  emMCP_log_debug("%s", uart_data_buf);
   // 检查串口数据是否为json格式
   cJSON *root = cJSON_Parse(uart_data_buf);
   if (root == NULL) {
@@ -528,7 +530,7 @@ void emMCP_TickHandle(int delay_ms) {
  * @brief 设置通讯波特率
  *
  */
-int emMCP_SetBaudrate(uint16_t baudrate) {
+int emMCP_SetBaudrate(uint32_t baudrate) {
   if (baudrate <= 0) {
     return -1;
   }
@@ -627,9 +629,19 @@ int emMCP_ResponseValue(char *value) {
   }
   char cmd[128] = {0};
   memset(cmd, 0, sizeof(cmd));
-  sprintf(cmd,
-          "mcp-responsive "
-          "{\"role\":\"MCU\",\"msgType\":\"status\",\"status\":\"%s\"}\r\n",
-          value);
+  cJSON *value_type = cJSON_Parse(value);
+  if (value_type == NULL)
+    sprintf(cmd,
+            "mcp-responsive "
+            "{\"role\":\"MCU\",\"msgType\":\"status\",\"status\":\"%s\"}\r\n",
+            value);
+  else {
+    sprintf(cmd,
+            "mcp-responsive "
+            "{\"role\":\"MCU\",\"msgType\":\"status\",\"status\":%s}\r\n",
+            value);
+  }
+  if (value_type != NULL)
+    cJSON_free(value_type);
   return uartPortSendData(cmd, strlen(cmd));
 }
