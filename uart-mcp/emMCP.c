@@ -376,8 +376,6 @@ int emMCP_RegistrationTools(void)
   {
     memset(cmd, 0, strlen(emMCP_dev->tools_str) + 64);
     sprintf(cmd, "mcp-tool {\"role\":\"MCU\",\"msgType\":\"MCP\",\"MCP\":%s}\r\n", emMCP_dev->tools_str);
-
-    memset(uart_data_buf, 0, sizeof(uart_data_buf));
     uartPortSendData(cmd, strlen(cmd));
   }
   emMCP_free(cmd);
@@ -513,7 +511,6 @@ static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type)
   }
   if (emMCP_event != emMCP_EVENT_NONE)
   {
-    memset(uart_data_paramp, 0, 256);
     if (*param_type == MCP_SERVER_TOOL_TYPE_STRING)
       strcpy(uart_data_paramp, msgType_param->valuestring);
     else
@@ -574,7 +571,7 @@ int emMCP_SetBaudrate(uint16_t baudrate)
   }
   char cmd[128] = {0};
   memset(cmd, 0, sizeof(cmd));
-  sprintf(cmd, "baudrate-set {\"role\":\"MCU\",\"msgType\":\"status\",\"status\":\"%d\"}\r\n", baudrate);
+  sprintf(cmd, "baudrate-set {\"role\":\"MCU\",\"msgType\":\"status\",\"status\":%d}\r\n", baudrate);
   uartPortSendData(cmd, strlen(cmd));
   // 等待AI设备返回结果
   int timerout = 0;
@@ -598,7 +595,7 @@ int emMCP_SetAiWakeUp(uint8_t WakeUp_Time)
 {
   char cmd[128] = {0};
   memset(cmd, 0, sizeof(cmd));
-  sprintf(cmd, "wake-up {\"role\":\"MCU\",\"msgType\":\"wake-up\",\"wake-up\":\"%d\"}\r\n", WakeUp_Time);
+  sprintf(cmd, "wake-up {\"role\":\"MCU\",\"msgType\":\"wake-up\",\"wake-up\":%d}\r\n", WakeUp_Time);
   int ret = uartPortSendData(cmd, strlen(cmd));
   if (ret > 0)
   {
@@ -623,7 +620,7 @@ int emMCP_SetAiVolume(uint8_t volume)
   }
   char cmd[128] = {0};
   memset(cmd, 0, sizeof(cmd));
-  sprintf(cmd, "volume-set {\"role\":\"MCU\",\"msgType\":\"status\",\"status\":\"%d\"}\r\n", volume);
+  sprintf(cmd, "volume-set {\"role\":\"MCU\",\"msgType\":\"status\",\"status\":%d}\r\n", volume);
   int ret = uartPortSendData(cmd, strlen(cmd));
   if (ret > 0)
   {
@@ -673,8 +670,18 @@ int emMCP_ResponseValue(char *value)
     emMCP_log_error("emMCP_dev is NULL");
     return -1;
   }
-  char cmd[128] = {0};
+  char cmd[256] = {0};
   memset(cmd, 0, sizeof(cmd));
-  sprintf(cmd, "mcp-responsive {\"role\":\"MCU\",\"msgType\":\"status\",\"status\":\"%s\"}\r\n", value);
+  cJSON *value_type = cJSON_Parse(value);
+  if (value_type == NULL)
+  {
+    sprintf(cmd, "mcp-responsive {\"role\":\"MCU\",\"msgType\":\"status\",\"status\":\"%s\"}\r\n", value);
+  }
+  else
+  {
+    sprintf(cmd, "mcp-responsive {\"role\":\"MCU\",\"msgType\":\"status\",\"status\":%s}\r\n", value);
+  }
+  if (value_type != NULL)
+    cJSON_free(value_type);
   return uartPortSendData(cmd, strlen(cmd));
 }
