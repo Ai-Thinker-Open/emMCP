@@ -404,8 +404,6 @@ static inline emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type
   }
   // 检查串口数据是否为json格式
   cJSON *root = cJSON_Parse(uart_data_buf);
-  cJSON_ParseWithLength()
-  cJSON_ParseWithLengthOpts()
   if (root == NULL)
   {
 
