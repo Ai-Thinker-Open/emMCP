@@ -408,14 +408,12 @@ static inline emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type
   cJSON_ParseWithLengthOpts()
   if (root == NULL)
   {
-
     return emMCP_EVENT_NONE;
   }
   // 检查串口数据是否为AI发送的数据
   cJSON *role = cJSON_GetObjectItemCaseSensitive(root, "role");
   if (role == NULL || strcmp(role->valuestring, "AI board") != 0)
   {
-
     cJSON_Delete(root);
     return emMCP_EVENT_NONE;
   }
