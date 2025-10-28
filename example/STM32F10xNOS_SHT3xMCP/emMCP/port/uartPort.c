@@ -9,13 +9,15 @@
  *
  */
 #include "uartPort.h"
+#include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stddef.h>
 #include <string.h>
 
 /* Private includes ----------------------------------------------------------*/
-
+#include "main.h"
+#include "usart.h"
 /**
  * @brief 串口发送函数接口
  *
@@ -23,15 +25,13 @@
  * @param len
  * @return int
  */
-int uartPortSendData(char *data, int len)
-{
-    // 在此处实现串口发送函数
-    if (data == NULL || len <= 0)
-    {
-        return -1;
-    }
+int uartPortSendData(char *data, int len) {
+  // 在此处实现串口发送函数
+  if (data == NULL || len <= 0) {
+    return -1;
+  }
 
-    return 0; // 返回发送状态
+  return HAL_UART_Transmit(&huart2, (uint8_t *)data, len, 200); // 返回发送状态
 }
 /**
  * @brief 串口接收函数接口,把这个函数在串口接收中断或接收循环中调用
@@ -40,14 +40,12 @@ int uartPortSendData(char *data, int len)
  * @param len
  * @return int
  */
-int uartPortRecvData(char *data, int len)
-{
-    if (data == NULL)
-    {
-        emMCP_log_error("uartPortRecvData: data is NULL");
-        return -1;
-    }
-    uart_data_buf = data;
-    emMCP_UpdateUartRecv(true);
-    return 0;
+int uartPortRecvData(char *data, int len) {
+  if (data == NULL) {
+    emMCP_log_error("uartPortRecvData: data is NULL");
+    return -1;
+  }
+  uart_data_buf = data;
+  emMCP_UpdateUartRecv(true);
+  return 0;
 }

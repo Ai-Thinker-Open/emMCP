@@ -18,14 +18,23 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "cJSON.h"
 #include "dma.h"
 #include "gpio.h"
+#include "log.h"
 #include "stm32f1xx_hal.h"
+#include "system_stm32f1xx.h"
 #include "usart.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "bsp_sht30.h"
 #include "emMCP.h"
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/_intsup.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -41,6 +50,7 @@
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
 emMCP_t emMCP;
+emMCP_tool_t SHT3X_tool;
 uint8_t rxBuffer[UART_RXBUFF_MAX] = {0};
 /* USER CODE END PM */
 
@@ -60,10 +70,27 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
+void SHT3X_CheckRequestHandler(void *arg) {
 
+  char ret = SHT30_Read(0x2c06);
+  if (ret != 0) {
+    log_error("SHT30_Read error %d", ret);
+    emMCP_ResponseValue(emMCP_CTRL_ERROR);
+    return;
+  }
+
+  char *sht30_str = malloc(64);
+  memset(sht30_str, 0, 64);
+  sprintf(sht30_str, "{\"temperature\":%d,\"humidity\":%d}",
+          (uint8_t)Temperature, (uint8_t)Humidity);
+  log_info("sht30_str=%s", sht30_str);
+  emMCP_ResponseValue(sht30_str);
+  free(sht30_str);
+}
 /* USER CODE END PFP */
 
-/* Private user code ---------------------------------------------------------*/
+/* Private user code
+   ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
 /* USER CODE END 0 */
@@ -90,13 +117,14 @@ int main(void) {
 
   /* Configure the system clock */
   SystemClock_Config();
-
+  SystemInit();
   /* USER CODE BEGIN SysInit */
 
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  SHT30_GPIO_Init();
   MX_DMA_Init();
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
@@ -104,8 +132,24 @@ int main(void) {
   HAL_UARTEx_ReceiveToIdle_DMA(&huart2, rxBuffer, UART_RXBUFF_MAX);
   __HAL_DMA_DISABLE_IT(&hdma_usart2_rx, DMA_IT_HT);
   emMCP_Init(&emMCP);
+  // 设置音量
+  emMCP_SetAiVolume(50);
   /* USER CODE END 2 */
+  SHT3X_tool.name = "温湿度传感器";
+  SHT3X_tool.description = "用于查询当前温度和湿度";
+  SHT3X_tool.inputSchema.properties[0].name = "temperature";
+  SHT3X_tool.inputSchema.properties[0].description =
+      "当前温度,单位摄氏度,查询发送:null";
+  SHT3X_tool.inputSchema.properties[0].type = MCP_SERVER_TOOL_TYPE_NUMBER;
+  SHT3X_tool.inputSchema.properties[1].name = "huimidity";
+  SHT3X_tool.inputSchema.properties[1].description =
+      "当前湿度,单位百分比,查询发送:null";
+  SHT3X_tool.inputSchema.properties[1].type = MCP_SERVER_TOOL_TYPE_NUMBER;
+  SHT3X_tool.checkRequestHandler = SHT3X_CheckRequestHandler;
 
+  emMCP_AddToolToToolList(&SHT3X_tool);
+  emMCP_RegistrationTools();
+  emMCP_SetAiWakeUp(20);
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1) {

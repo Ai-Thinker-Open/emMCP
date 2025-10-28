@@ -41,7 +41,7 @@ add_subdirectory(cmake/stm32cubemx)
 target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined library search paths
 )
-file(GLOB SRC_FILES "App/Src/*.c" "emMCP/port/*.c" "emMCP/uart-mcp/*.c" "emMCP/uart-mcp/cJSON/*.c")
+file(GLOB SRC_FILES "App/Src/*.c" "emMCP/port/*.c" "emMCP/uart-mcp/*.c" "emMCP/uart-mcp/cJSON/*.c" "SHT3x/*.c")
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
@@ -55,6 +55,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     emMCP/port/
     emMCP/uart-mcp/
     emMCP/uart-mcp/cJSON/
+    SHT3x/
 )
 
 # Add project symbols (macros)
