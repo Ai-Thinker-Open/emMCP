@@ -405,8 +405,7 @@ static inline emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type
   // 检查串口数据是否为json格式
   cJSON *root = cJSON_Parse(uart_data_buf);
   cJSON_ParseWithLength()
-  cJSON_ParseWithLengthOpts()
-  if (root == NULL)
+      cJSON_ParseWithLengthOpts() if (root == NULL)
   {
     return emMCP_EVENT_NONE;
   }
@@ -625,7 +624,6 @@ int emMCP_SetAiVolume(uint8_t volume)
   char cmd[128] = {0};
   memset(cmd, 0, sizeof(cmd));
   sprintf(cmd, "volume-set {\"role\":\"MCU\",\"msgType\":\"status\",\"status\":%d}\r\n", volume);
-  // snprintf(cmd, 128, "volume-set {\"role\":\"MCU\",\"msgType\":\"status\",\"status\":%d}\r\n", volume);
   int ret = uartPortSendData(cmd, strlen(cmd));
   if (ret > 0)
   {
@@ -646,7 +644,6 @@ uint8_t emMCP_CheckAiVolume(void)
   char cmd[128] = {0};
   memset(cmd, 0, sizeof(cmd));
   sprintf(cmd, "volume-check {\"role\":\"MCU\",\"msgType\":\"status\"}\r\n");
-  // snprintf(cmd, 128, "volume-check {\"role\":\"MCU\",\"msgType\":\"status\"}\r\n");
   int ret = uartPortSendData(cmd, strlen(cmd));
   if (ret > 0)
   {
@@ -682,12 +679,10 @@ int emMCP_ResponseValue(char *value)
   if (value_type == NULL)
   {
     sprintf(cmd, "mcp-responsive {\"role\":\"MCU\",\"msgType\":\"status\",\"status\":\"%s\"}\r\n", value);
-    // snprintf(cmd, 256, "mcp-responsive {\"role\":\"MCU\",\"msgType\":\"status\",\"status\":\"%s\"}\r\n", value);
   }
   else
   {
     sprintf(cmd, "mcp-responsive {\"role\":\"MCU\",\"msgType\":\"status\",\"status\":%s}\r\n", value);
-    // snprintf(cmd, 256, "mcp-responsive {\"role\":\"MCU\",\"msgType\":\"status\",\"status\":%s}\r\n", value);
   }
   if (value_type != NULL)
     cJSON_free(value_type);
