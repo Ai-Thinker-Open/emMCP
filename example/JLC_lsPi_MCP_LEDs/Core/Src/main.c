@@ -65,35 +65,47 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
-  if (huart == &huart2) {
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
+{
+  if (huart == &huart2)
+  {
     uartPortRecvData((char *)rxBuffer, Size);
     HAL_UARTEx_ReceiveToIdle_DMA(&huart2, rxBuffer, RXBUFFER_SIZE_MAX);
     __HAL_DMA_DISABLE_IT(huart2.hdmarx, DMA_IT_HT);
   }
 }
 
-static void LED_ToolsRequestHandler(void *arg) {
+static void LED_ToolsRequestHandler(void *arg)
+{
   cJSON *param = (cJSON *)arg;
   cJSON *led1 = cJSON_GetObjectItem(param, "led1");
   cJSON *led2 = cJSON_GetObjectItem(param, "led2");
   cJSON *led3 = cJSON_GetObjectItem(param, "led3");
   cJSON *led4 = cJSON_GetObjectItem(param, "led4");
-  if (led1 != NULL) {
-    HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin,
-                      led1->valueint ? GPIO_PIN_SET : GPIO_PIN_RESET);
+  cJSON *led_all = cJSON_GetObjectItem(param, "led_all");
+
+  if (led1 != NULL)
+  {
+    HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, led1->valueint ? GPIO_PIN_SET : GPIO_PIN_RESET);
   }
-  if (led2 != NULL) {
-    HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin,
-                      led2->valueint ? GPIO_PIN_SET : GPIO_PIN_RESET);
+  if (led2 != NULL)
+  {
+    HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, led2->valueint ? GPIO_PIN_SET : GPIO_PIN_RESET);
   }
-  if (led3 != NULL) {
-    HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin,
-                      led3->valueint ? GPIO_PIN_SET : GPIO_PIN_RESET);
+  if (led3 != NULL)
+  {
+    HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, led3->valueint ? GPIO_PIN_SET : GPIO_PIN_RESET);
   }
-  if (led4 != NULL) {
-    HAL_GPIO_WritePin(LED4_GPIO_Port, LED4_Pin,
-                      led4->valueint ? GPIO_PIN_SET : GPIO_PIN_RESET);
+  if (led4 != NULL)
+  {
+    HAL_GPIO_WritePin(LED4_GPIO_Port, LED4_Pin, led4->valueint ? GPIO_PIN_SET : GPIO_PIN_RESET);
+  }
+  if (led_all != NULL)
+  {
+    HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, led_all->valueint ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin, led_all->valueint ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, led_all->valueint ? GPIO_PIN_SET : GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(LED4_GPIO_Port, LED4_Pin, led_all->valueint ? GPIO_PIN_SET : GPIO_PIN_RESET);
   }
   emMCP_ResponseValue(emMCP_CTRL_OK);
 }
@@ -103,7 +115,8 @@ static void LED_ToolsRequestHandler(void *arg) {
  * @brief  The application entry point.
  * @retval int
  */
-int main(void) {
+int main(void)
+{
 
   /* USER CODE BEGIN 1 */
 
@@ -138,22 +151,20 @@ int main(void) {
   LED_Tools.name = "开发板LED";
   LED_Tools.description = "用于控制开发板的4颗LED灯";
   LED_Tools.inputSchema.properties[0].name = "led1";
-  LED_Tools.inputSchema.properties[0].description =
-      "控制LED1的亮灭,false为灭,true为亮";
+  LED_Tools.inputSchema.properties[0].description = "控制LED1的亮灭,false为灭,true为亮";
   LED_Tools.inputSchema.properties[0].type = MCP_SERVER_TOOL_TYPE_BOOLEAN;
   LED_Tools.inputSchema.properties[1].name = "led2";
-  LED_Tools.inputSchema.properties[1].description =
-      "控制LED2的亮灭,false为灭,true为亮";
+  LED_Tools.inputSchema.properties[1].description = "控制LED2的亮灭,false为灭,true为亮";
   LED_Tools.inputSchema.properties[1].type = MCP_SERVER_TOOL_TYPE_BOOLEAN;
   LED_Tools.inputSchema.properties[2].name = "led3";
-  LED_Tools.inputSchema.properties[2].description =
-      "控制LED3的亮灭,false为灭,true为亮";
+  LED_Tools.inputSchema.properties[2].description = "控制LED3的亮灭,false为灭,true为亮";
   LED_Tools.inputSchema.properties[2].type = MCP_SERVER_TOOL_TYPE_BOOLEAN;
   LED_Tools.inputSchema.properties[3].name = "led4";
-  LED_Tools.inputSchema.properties[3].description =
-      "控制LED4的亮灭,false为灭,true为亮";
+  LED_Tools.inputSchema.properties[3].description = "控制LED4的亮灭,false为灭,true为亮";
   LED_Tools.inputSchema.properties[3].type = MCP_SERVER_TOOL_TYPE_BOOLEAN;
-
+  LED_Tools.inputSchema.properties[4].name = "led_all";
+  LED_Tools.inputSchema.properties[4].description = "控制所有LED的亮灭,false为灭,true为亮";
+  LED_Tools.inputSchema.properties[4].type = MCP_SERVER_TOOL_TYPE_BOOLEAN;
   LED_Tools.setRequestHandler = LED_ToolsRequestHandler;
   emMCP_AddToolToToolList(&LED_Tools);
   emMCP_RegistrationTools();
@@ -161,7 +172,8 @@ int main(void) {
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1) {
+  while (1)
+  {
     /* USER CODE END WHILE */
     emMCP_TickHandle(100);
     /* USER CODE BEGIN 3 */
@@ -173,7 +185,8 @@ int main(void) {
  * @brief System Clock Configuration
  * @retval None
  */
-void SystemClock_Config(void) {
+void SystemClock_Config(void)
+{
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
@@ -194,13 +207,15 @@ void SystemClock_Config(void) {
   RCC_OscInitStruct.PLL.PLLN = 180;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 4;
-  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
+  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+  {
     Error_Handler();
   }
 
   /** Activate the Over-Drive mode
    */
-  if (HAL_PWREx_EnableOverDrive() != HAL_OK) {
+  if (HAL_PWREx_EnableOverDrive() != HAL_OK)
+  {
     Error_Handler();
   }
 
@@ -213,7 +228,8 @@ void SystemClock_Config(void) {
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5) != HAL_OK) {
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5) != HAL_OK)
+  {
     Error_Handler();
   }
 }
@@ -230,11 +246,13 @@ void SystemClock_Config(void) {
  * @param  htim : TIM handle
  * @retval None
  */
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
   /* USER CODE BEGIN Callback 0 */
 
   /* USER CODE END Callback 0 */
-  if (htim->Instance == TIM1) {
+  if (htim->Instance == TIM1)
+  {
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
@@ -246,11 +264,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
  * @brief  This function is executed in case of error occurrence.
  * @retval None
  */
-void Error_Handler(void) {
+void Error_Handler(void)
+{
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
   __disable_irq();
-  while (1) {
+  while (1)
+  {
   }
   /* USER CODE END Error_Handler_Debug */
 }
@@ -262,7 +282,8 @@ void Error_Handler(void) {
  * @param  line: assert_param error line source number
  * @retval None
  */
-void assert_failed(uint8_t *file, uint32_t line) {
+void assert_failed(uint8_t *file, uint32_t line)
+{
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line
      number, ex: printf("Wrong parameters value: file %s on line %d\r\n", file,

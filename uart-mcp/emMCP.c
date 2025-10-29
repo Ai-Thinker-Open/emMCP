@@ -336,7 +336,6 @@ cJSON *emMCP_GetParam(cJSON *params, char *param_name)
   }
   return cJSON_GetObjectItemCaseSensitive(params, param_name);
 }
-
 /**
  * @brief 检查UART数据是否发送成功
  *
