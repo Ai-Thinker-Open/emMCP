@@ -76,12 +76,25 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
 static void LED_ToolsRequestHandler(void *arg) {
   cJSON *param = (cJSON *)arg;
   cJSON *led1 = cJSON_GetObjectItem(param, "led1");
-
+  cJSON *led2 = cJSON_GetObjectItem(param, "led2");
+  cJSON *led3 = cJSON_GetObjectItem(param, "led3");
+  cJSON *led4 = cJSON_GetObjectItem(param, "led4");
   if (led1 != NULL) {
     HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin,
                       led1->valueint ? GPIO_PIN_SET : GPIO_PIN_RESET);
   }
-
+  if (led2 != NULL) {
+    HAL_GPIO_WritePin(LED2_GPIO_Port, LED2_Pin,
+                      led2->valueint ? GPIO_PIN_SET : GPIO_PIN_RESET);
+  }
+  if (led3 != NULL) {
+    HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin,
+                      led3->valueint ? GPIO_PIN_SET : GPIO_PIN_RESET);
+  }
+  if (led4 != NULL) {
+    HAL_GPIO_WritePin(LED4_GPIO_Port, LED4_Pin,
+                      led4->valueint ? GPIO_PIN_SET : GPIO_PIN_RESET);
+  }
   emMCP_ResponseValue(emMCP_CTRL_OK);
 }
 /* USER CODE END 0 */
@@ -128,6 +141,18 @@ int main(void) {
   LED_Tools.inputSchema.properties[0].description =
       "控制LED1的亮灭,false为灭,true为亮";
   LED_Tools.inputSchema.properties[0].type = MCP_SERVER_TOOL_TYPE_BOOLEAN;
+  LED_Tools.inputSchema.properties[1].name = "led2";
+  LED_Tools.inputSchema.properties[1].description =
+      "控制LED2的亮灭,false为灭,true为亮";
+  LED_Tools.inputSchema.properties[1].type = MCP_SERVER_TOOL_TYPE_BOOLEAN;
+  LED_Tools.inputSchema.properties[2].name = "led3";
+  LED_Tools.inputSchema.properties[2].description =
+      "控制LED3的亮灭,false为灭,true为亮";
+  LED_Tools.inputSchema.properties[2].type = MCP_SERVER_TOOL_TYPE_BOOLEAN;
+  LED_Tools.inputSchema.properties[3].name = "led4";
+  LED_Tools.inputSchema.properties[3].description =
+      "控制LED4的亮灭,false为灭,true为亮";
+  LED_Tools.inputSchema.properties[3].type = MCP_SERVER_TOOL_TYPE_BOOLEAN;
 
   LED_Tools.setRequestHandler = LED_ToolsRequestHandler;
   emMCP_AddToolToToolList(&LED_Tools);
