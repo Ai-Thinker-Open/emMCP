@@ -310,7 +310,7 @@ static void emMCP_ResponsiveToolRequest(char *tool_name, cJSON *arguments)
     {
       mcp_tool_arry[tools_numble].setRequestHandler(cJSON_GetObjectItem(arguments, METHODS));
     }
-    else if (arguments->type == cJSON_Object || (arguments->child == NULL && arguments->child->type != cJSON_NULL))
+    else if ((arguments->type == cJSON_Object && arguments->child == NULL) || (arguments->type == cJSON_Object && arguments->child != NULL && arguments->child->type != cJSON_NULL))
     {
       mcp_tool_arry[tools_numble].setRequestHandler(arguments);
     }
