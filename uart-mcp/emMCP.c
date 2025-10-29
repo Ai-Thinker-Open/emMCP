@@ -299,39 +299,24 @@ static void emMCP_ResponsiveToolRequest(char *tool_name, cJSON *arguments)
 
   if (strcmp(mcp_tool_arry[tools_numble].name, tool_name) == 0)
   {
-    // 判断是否为 methods 参数
-    if (cJSON_GetObjectItemCaseSensitive(arguments, mcp_tool_arry[tools_numble].inputSchema.methods[0].parameters[0].name) != NULL ||
-        cJSON_GetObjectItemCaseSensitive(arguments, mcp_tool_arry[tools_numble].inputSchema.methods[0].name) != NULL ||
-        cJSON_GetObjectItemCaseSensitive(arguments, METHODS) != NULL)
+    // 判断 arguments 参数是否为 NULL
+    if (arguments->type == cJSON_Object && arguments->child == NULL)
     {
-      // 执行请求
-      if (cJSON_GetObjectItemCaseSensitive(arguments, METHODS) != NULL)
-      {
-        cJSON *method = cJSON_GetObjectItemCaseSensitive(cJSON_GetObjectItemCaseSensitive(arguments, METHODS), mcp_tool_arry[tools_numble].inputSchema.methods[0].name);
-        mcp_tool_arry[tools_numble].setRequestHandler(method == NULL ? arguments : method);
-      }
-      else if (cJSON_GetObjectItemCaseSensitive(arguments, mcp_tool_arry[tools_numble].inputSchema.methods[0].parameters[0].name) != NULL)
-      {
-        cJSON *method = cJSON_GetObjectItemCaseSensitive(arguments, mcp_tool_arry[tools_numble].inputSchema.methods[0].parameters[0].name);
-        mcp_tool_arry[tools_numble].setRequestHandler(method == NULL ? arguments : method);
-      }
-      else
-      {
-        mcp_tool_arry[tools_numble].setRequestHandler(arguments);
-      }
+      mcp_tool_arry[tools_numble].checkRequestHandler(arguments);
+      return;
     }
-    else if (cJSON_GetObjectItemCaseSensitive(arguments, mcp_tool_arry[tools_numble].inputSchema.properties[0].name) != NULL || arguments->child == NULL)
+    //  判断是否为 methods 参数
+    if (cJSON_GetObjectItem(arguments, METHODS) != NULL)
     {
-      cJSON *prop = cJSON_GetObjectItemCaseSensitive(arguments, mcp_tool_arry[tools_numble].inputSchema.properties[0].name);
-
-      if (prop != NULL && prop->type != cJSON_NULL)
-      {
-        mcp_tool_arry[tools_numble].setRequestHandler(arguments);
-      }
-      else
-      {
-        mcp_tool_arry[tools_numble].checkRequestHandler(arguments);
-      }
+      mcp_tool_arry[tools_numble].setRequestHandler(cJSON_GetObjectItem(arguments, METHODS));
+    }
+    else if (arguments->type == cJSON_Object || (arguments->child == NULL && arguments->child->type != cJSON_NULL))
+    {
+      mcp_tool_arry[tools_numble].setRequestHandler(arguments);
+    }
+    else
+    {
+      mcp_tool_arry[tools_numble].checkRequestHandler(arguments);
     }
     return;
   }
@@ -404,8 +389,7 @@ static inline emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type
   }
   // 检查串口数据是否为json格式
   cJSON *root = cJSON_Parse(uart_data_buf);
-  cJSON_ParseWithLength()
-      cJSON_ParseWithLengthOpts() if (root == NULL)
+  if (root == NULL)
   {
     return emMCP_EVENT_NONE;
   }
