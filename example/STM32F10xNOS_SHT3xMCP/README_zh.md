@@ -1,3 +1,4 @@
+[![English](https://img.shields.io/badge/Language-English-green.svg)](README.md)
 <h1 align="center">接线说明</h1>
 <div align="center">
 

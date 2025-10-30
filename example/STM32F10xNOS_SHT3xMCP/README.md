@@ -1,3 +1,4 @@
+[![中文](https://img.shields.io/badge/Language-简体中文-green.svg)](README_zh.md)
 <h1 align="center">Wiring Instructions </h1>
 <div align="center">
 
