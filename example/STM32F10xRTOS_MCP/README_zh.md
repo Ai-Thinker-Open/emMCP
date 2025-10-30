@@ -10,7 +10,7 @@ flowchart LR
         D1("GND")
   end
 
- subgraph stm32["梁山派 GD32F470"]
+ subgraph stm32["STM32F10x 开发板"]
         A2("5V")
         B2("PA3")
         C2("PA2")

@@ -1,24 +1,24 @@
-<h1 align="center">接线说明</h1>
+<h1 align="center">Wiring Instructions </h1>
 <div align="center">
 
 ```mermaid
 flowchart LR
- subgraph xiaoAnAi["小安 AI"]
+ subgraph xiaoAnAi["AI Module"]
         A1("5V")
         B1("RXD")
         C1("TXD")
         D1("GND")
   end
 
- subgraph stm32["梁山派 GD32F470"]
+ subgraph stm32["lsPi"]
         A2("5V")
         B2("PA3")
         C2("PA2")
         D2("GND")
   end
     A1 <==> A2
-    B1 e1@<--> |波特率:115200|B2
-    C1 e2@<--> |波特率:115200|C2
+    B1 e1@<--> |baud rate:115200|B2
+    C1 e2@<--> |baud rate:115200|C2
     D1 <==> D2
 
 e1@{ animation: fast }
