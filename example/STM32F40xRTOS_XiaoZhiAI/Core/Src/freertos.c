@@ -115,9 +115,9 @@ void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
   /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
+  for (;;) {
+    emMCP_TickHandle(10);
+    osDelay(pdMS_TO_TICKS(10));
   }
   /* USER CODE END StartDefaultTask */
 }

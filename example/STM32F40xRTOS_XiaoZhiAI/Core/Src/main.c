@@ -20,7 +20,9 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include "dma.h"
+#include "oled_ssd1306.h"
 #include "spi.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -36,7 +38,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define RX_BUFFER_SIZE 256
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -47,7 +49,8 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+uint8_t rxBuffer[RX_BUFFER_SIZE];
+emMCP_t emMCP;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -59,6 +62,14 @@ void MX_FREERTOS_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
+  if (huart == &huart2) {
+    uartPortRecvData((char*)rxBuffer, Size);
+    HAL_UARTEx_ReceiveToIdle_DMA(&huart2, rxBuffer, RX_BUFFER_SIZE);
+  __HAL_DMA_DISABLE_IT(huart2.hdmarx, DMA_IT_HT);
+  } 
+}
+
 
 /* USER CODE END 0 */
 
@@ -86,7 +97,7 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
+  SystemInit();
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -95,7 +106,17 @@ int main(void)
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
   MX_SPI1_Init();
+  MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
+  OLED_Init();
+  OLED_ColorTurn(0);
+  OLED_DisplayTurn(0);
+  OLED_Clear();
+  OLED_Display_UTF8(32+8, 0, "小安AI");
+  OLED_Display_UTF8(16+8, 3, "你好，世界!");
+  HAL_UARTEx_ReceiveToIdle_DMA(&huart2, rxBuffer, RX_BUFFER_SIZE);
+  __HAL_DMA_DISABLE_IT(huart2.hdmarx, DMA_IT_HT);
+  emMCP_Init(&emMCP);
 
   /* USER CODE END 2 */
 

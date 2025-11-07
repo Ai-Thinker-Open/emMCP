@@ -70,6 +70,39 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
     __HAL_DMA_DISABLE_IT(huart2.hdmarx, DMA_IT_HT);
 	}
 }
+/**
+ * @brief MCP??????????
+ * 
+ * @param event 
+ * @param type 
+ * @param param 
+ */
+void emMCP_EventCallback(emMCP_event_t event, mcp_server_tool_type_t type,void *param)
+{
+  char *param_str = (char *)param;
+  emMCP_log_debug("emMCP_EventCallback: event:%d,type:%d,param:%s", event, type, param_str);
+  switch (event) {
+  case emMCP_EVENT_AI_MCP_Text: {
+    cJSON *root = cJSON_Parse(param_str);
+    cJSON *state = cJSON_GetObjectItem(root, "state");
+    if (state->valueint == true) {
+      cJSON *text = cJSON_GetObjectItem(root, "text");
+      if (text != NULL) {
+       
+         OLED_Display_UTF8(0, 6, text->valuestring);
+       
+        }
+         
+    }else {
+      OLED_Display_GB2312_string(0,4,"");
+    }
+    cJSON_Delete(root);
+    }
+    break;
+  default:
+    break;
+  }
+}
 /* USER CODE END 0 */
 
 /**
@@ -106,9 +139,25 @@ int main(void)
   MX_USART2_UART_Init();
   MX_SPI1_Init();
   /* USER CODE BEGIN 2 */
+  OLED_Init();
+  OLED_ColorTurn(0);
+  OLED_DisplayTurn(0); 
+  OLED_Clear();
   HAL_UARTEx_ReceiveToIdle_DMA(&huart2, rxBuffer, RXBUFFSER_MAX_SIZE);
   __HAL_DMA_DISABLE_IT(huart2.hdmarx, DMA_IT_HT);
+
   emMCP_Init(&emMCP);
+  // OLED_Display_GB2312_string(8,3,"Hello World");
+  // OLED_Display_8x16(0,0,"Hello World");
+  OLED_Display_UTF8(0, 3, "欢迎使用小安AI");
+  OLED_WR_Byte(0X2E, OLED_CMD);
+  OLED_WR_Byte(0X2A, OLED_CMD);
+  OLED_WR_Byte(0X00, OLED_CMD);
+  OLED_WR_Byte(0X00, OLED_CMD);
+  OLED_WR_Byte(0X07, OLED_CMD);
+  OLED_WR_Byte(0X07, OLED_CMD);
+  OLED_WR_Byte(0X00, OLED_CMD);
+  OLED_WR_Byte(0X2F, OLED_CMD);
   /* USER CODE END 2 */
 
   /* Init scheduler */
@@ -172,6 +221,28 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 
 /* USER CODE END 4 */
+
+/**
+  * @brief  Period elapsed callback in non blocking mode
+  * @note   This function is called  when TIM1 interrupt took place, inside
+  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+  * a global variable "uwTick" used as application time base.
+  * @param  htim : TIM handle
+  * @retval None
+  */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  /* USER CODE BEGIN Callback 0 */
+
+  /* USER CODE END Callback 0 */
+  if (htim->Instance == TIM1)
+  {
+    HAL_IncTick();
+  }
+  /* USER CODE BEGIN Callback 1 */
+
+  /* USER CODE END Callback 1 */
+}
 
 /**
   * @brief  This function is executed in case of error occurrence.

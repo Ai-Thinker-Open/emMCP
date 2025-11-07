@@ -32,6 +32,11 @@ extern "C" {
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "emMCP.h"
+#include "log.h"
+#include "oled_ssd1306.h"
+
+#include "task.h"
+// #include "oled.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/

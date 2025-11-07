@@ -62,7 +62,21 @@ const osTimerAttr_t emMCP_TickHandleTimers_attributes = {
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
+osThreadId_t oled_Scroll_task;
+const osThreadAttr_t oled_Scroll_task_attributes = {
+    .name = "oled_Scroll_task",
+    .stack_size = 256 * 4,
+    .priority = (osPriority_t)osPriorityNormal,
+};
 
+osThreadId_t oled_TickHandle_task;
+const osThreadAttr_t oled_TickHandle_task_attributes = {
+    .name = "oled_TickHandle_task",
+    .stack_size = 256 * 4,
+    .priority = (osPriority_t)osPriorityNormal,
+};
+void oled_Scroll_taskHandler(void *argument);
+void oled_TickHandle_taskHandle(void *argument);
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void *argument);
@@ -106,6 +120,8 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
+  // oled_Scroll_task=osThreadNew(oled_Scroll_taskHandler, NULL,&oled_Scroll_task_attributes);
+  oled_TickHandle_task=osThreadNew(oled_TickHandle_taskHandle,NULL, &oled_TickHandle_task_attributes);
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -125,8 +141,9 @@ void StartDefaultTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
   /* Infinite loop */
+ 
   for (;;) {
-    emMCP_TickHandle(10);
+     emMCP_TickHandle(10);
   }
   /* USER CODE END StartDefaultTask */
 }
@@ -135,12 +152,34 @@ void StartDefaultTask(void *argument)
 void emMCP_TickHandleTimersCallback(void *argument)
 {
   /* USER CODE BEGIN emMCP_TickHandleTimersCallback */
-  
+   
   /* USER CODE END emMCP_TickHandleTimersCallback */
 }
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
+void oled_TickHandle_taskHandle(void *argument)
+{
+  /* USER CODE BEGIN StartDefaultTask */
+  /* Infinite loop */
 
+  for (;;) {
+   
+    osDelay(pdMS_TO_TICKS(10));
+    }
+  /* USER CODE END StartDefaultTask */
+}
+
+void oled_Scroll_taskHandler(void *argument)
+{
+  /* USER CODE BEGIN StartDefaultTask */
+  /* Infinite loop */
+  
+  for (;;) {
+
+     osDelay(pdMS_TO_TICKS(5)); 
+  }
+  /* USER CODE END StartDefaultTask */
+}
 /* USER CODE END Application */
 

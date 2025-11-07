@@ -31,7 +31,9 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "emMCP.h"
+#include "log.h"
+#include "oled_ssd1306.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -57,6 +59,20 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define OLED_DC_Pin GPIO_PIN_0
+#define OLED_DC_GPIO_Port GPIOA
+#define OLED_CS2_Pin GPIO_PIN_1
+#define OLED_CS2_GPIO_Port GPIOA
+#define OLED_CS1_Pin GPIO_PIN_4
+#define OLED_CS1_GPIO_Port GPIOA
+#define OLED_CLK_Pin GPIO_PIN_5
+#define OLED_CLK_GPIO_Port GPIOA
+#define OLED_FSO_Pin GPIO_PIN_6
+#define OLED_FSO_GPIO_Port GPIOA
+#define OLED_MOSI_Pin GPIO_PIN_7
+#define OLED_MOSI_GPIO_Port GPIOA
+#define WS2812_Pin_Pin GPIO_PIN_12
+#define WS2812_Pin_GPIO_Port GPIOD
 
 /* USER CODE BEGIN Private defines */
 

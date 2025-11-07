@@ -42,15 +42,24 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined library search paths
 )
 
+file(GLOB SRC_FILES "App/Src/*.c" "emMCP/port/*.c" "emMCP/uart-mcp/*.c" "emMCP/uart-mcp/cJSON/*.c")
 # Add sources to executable
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE
+target_sources( ${CMAKE_PROJECT_NAME} PRIVATE
+
     # Add user sources here
+    ${SRC_FILES}
+
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
+   App/Inc
+   emMCP/port
+   emMCP/uart-mcp
+   emMCP/uart-mcp/cJSON
 )
+
 
 # Add project symbols (macros)
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
