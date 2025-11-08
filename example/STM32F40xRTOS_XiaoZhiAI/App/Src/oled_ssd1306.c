@@ -381,7 +381,7 @@ void OLED_ShowNum(uint8_t x,uint8_t y,float num1,uint8_t len)
 
 //OLED的初始化
 void OLED_Init(void) {
-
+  HAL_Delay(100);
   OLED_WR_Byte(0xAE,OLED_CMD);//--turn off oled panel
   OLED_WR_Byte(0x00,OLED_CMD);//---set low column address
   OLED_WR_Byte(0x10,OLED_CMD);//---set high column address

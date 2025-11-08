@@ -34,6 +34,7 @@ extern "C" {
 #include "emMCP.h"
 #include "log.h"
 #include "oled_ssd1306.h"
+#include "u8g2_user.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/

@@ -23,6 +23,8 @@
 #include "oled_ssd1306.h"
 #include "spi.h"
 #include "tim.h"
+#include "u8g2.h"
+#include "u8g2_user.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -51,6 +53,7 @@
 /* USER CODE BEGIN PV */
 uint8_t rxBuffer[RX_BUFFER_SIZE];
 emMCP_t emMCP;
+u8g2_t u8g2;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -112,8 +115,9 @@ int main(void)
   OLED_ColorTurn(0);
   OLED_DisplayTurn(0);
   OLED_Clear();
-  OLED_Display_UTF8(32+8, 0, "小安AI");
-  OLED_Display_UTF8(16+8, 3, "你好，世界!");
+  u8g2_user_init(&u8g2);
+  // OLED_Display_UTF8(32+8, 0, "小安AI");
+  // OLED_Display_UTF8(16+8, 3, "你好，世界!");
   HAL_UARTEx_ReceiveToIdle_DMA(&huart2, rxBuffer, RX_BUFFER_SIZE);
   __HAL_DMA_DISABLE_IT(huart2.hdmarx, DMA_IT_HT);
   emMCP_Init(&emMCP);
