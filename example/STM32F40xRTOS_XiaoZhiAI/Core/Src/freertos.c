@@ -143,8 +143,6 @@ void U8g2DemoTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
   /* Infinite loop */
- 
-   
     int16_t scroll_offset = 0;        // 初始偏移量（屏幕右侧外）
     const uint8_t scroll_speed = 1;   // 滚动速度（像素/帧）
     const uint16_t frame_delay = 10;  // 帧间隔（毫秒）
@@ -164,4 +162,4 @@ void U8g2DemoTask(void *argument)
   /* USER CODE END StartDefaultTask */
 }
 /* USER CODE END Application */
-
+/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
