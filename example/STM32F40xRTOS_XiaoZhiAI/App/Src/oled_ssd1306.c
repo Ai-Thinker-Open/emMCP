@@ -277,6 +277,8 @@ void OLED_Display_GB2312_string(uint8_t x,uint8_t y,char *text)
 			i++;
   }
 }
+
+
 // OLED��ʾUTF-8�ַ���
 void OLED_Display_UTF8(uint8_t x, uint8_t y, const char *text) {
     uint8_t i = 0;

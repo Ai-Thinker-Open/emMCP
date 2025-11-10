@@ -17,7 +17,6 @@
 #include "u8x8.h"
 #include <stdint.h>
 
-
 void draw(u8g2_t *u8g2)
 {
     u8g2_SetFontMode(u8g2, 1); /*字体模式选择*/

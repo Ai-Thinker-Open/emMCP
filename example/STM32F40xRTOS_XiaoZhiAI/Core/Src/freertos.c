@@ -19,9 +19,13 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "FreeRTOS.h"
+#include "cmsis_os2.h"
+#include "oled_ssd1306.h"
 #include "task.h"
 #include "main.h"
 #include "cmsis_os.h"
+#include "u8g2.h"
+#include "u8g2_gt2016.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -63,7 +67,7 @@ osThreadId_t u8g2Demo_TaskHandle;
 const osThreadAttr_t u8g2Demo_Task_attributes = {
     .name = "u8g2Demo",
     .stack_size = 256 * 4,
-    .priority = (osPriority_t)osPriorityNormal,
+    .priority = (osPriority_t)osPriorityLow,
 };
 
 void U8g2DemoTask(void *argument);
@@ -139,31 +143,23 @@ void U8g2DemoTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
   /* Infinite loop */
-    u8g2_FirstPage(&u8g2);
-    do {
-       draw(&u8g2);
-    }while (u8g2_NextPage(&u8g2));
-    HAL_Delay(1000);
-    u8g2_ClearBuffer(&u8g2);
-
+ 
    
-
     int16_t scroll_offset = 0;        // 初始偏移量（屏幕右侧外）
     const uint8_t scroll_speed = 1;   // 滚动速度（像素/帧）
     const uint16_t frame_delay = 10;  // 帧间隔（毫秒）
     uint16_t screen_width = u8g2_GetDisplayWidth(&u8g2);
-
     // 初始偏移量设置为屏幕宽度（文本从右侧进入）
     scroll_offset = screen_width;
-  for (;;) {
-    // 绘制滚动文本（Y坐标32为屏幕中间）
-        scroll_text(&u8g2, long_text, 63-6, scroll_offset);
-        
-        // 偏移量递减（文本左移）
-        scroll_offset += scroll_speed;
-        
-        // 无需显式重置，通过取模运算自然循环（在scroll_text中处理）
-    osDelay(frame_delay);
+    for (;;) {
+      u8g2_FirstPage(&u8g2);
+      do {
+          scroll_text(&u8g2, long_text, 63, scroll_offset);
+          u8g2_DrawUTF8(&u8g2, 16 + 8, 32, "欢迎使用小安AI");
+          scroll_offset += scroll_speed;
+          osDelay(frame_delay);
+      }while(u8g2_NextPage(&u8g2));
+      osDelay(frame_delay);
   }
   /* USER CODE END StartDefaultTask */
 }
