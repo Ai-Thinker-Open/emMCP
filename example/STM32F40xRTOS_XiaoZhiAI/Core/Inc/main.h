@@ -76,7 +76,9 @@ void Error_Handler(void);
 #define WS2812_Pin_GPIO_Port GPIOD
 
 /* USER CODE BEGIN Private defines */
-
+#define WELCOME_MEG "睡眠中,使用\"你好小安\"唤醒我!"
+extern u8g2_t u8g2;
+extern char long_text[128];
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

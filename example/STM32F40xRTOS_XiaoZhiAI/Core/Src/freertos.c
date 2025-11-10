@@ -51,12 +51,22 @@
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
-  .stack_size = 128 * 4,
+  .stack_size = 256 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
+Cozmo cozmo;
+char long_text[128] = "睡眠中,请使用\"你好小安\"唤醒我!";
+osThreadId_t u8g2Demo_TaskHandle;
+const osThreadAttr_t u8g2Demo_Task_attributes = {
+    .name = "u8g2Demo",
+    .stack_size = 256 * 4,
+    .priority = (osPriority_t)osPriorityNormal,
+};
+
+void U8g2DemoTask(void *argument);
 
 /* USER CODE END FunctionPrototypes */
 
@@ -96,6 +106,7 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
+   u8g2Demo_TaskHandle= osThreadNew(U8g2DemoTask, NULL, &u8g2Demo_Task_attributes);
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -117,13 +128,44 @@ void StartDefaultTask(void *argument)
   /* Infinite loop */
   for (;;) {
     emMCP_TickHandle(10);
-    osDelay(pdMS_TO_TICKS(10));
+    osDelay(10);
   }
   /* USER CODE END StartDefaultTask */
 }
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
+void U8g2DemoTask(void *argument)
+{
+  /* USER CODE BEGIN StartDefaultTask */
+  /* Infinite loop */
+    u8g2_FirstPage(&u8g2);
+    do {
+       draw(&u8g2);
+    }while (u8g2_NextPage(&u8g2));
+    HAL_Delay(1000);
+    u8g2_ClearBuffer(&u8g2);
 
+   
+
+    int16_t scroll_offset = 0;        // 初始偏移量（屏幕右侧外）
+    const uint8_t scroll_speed = 1;   // 滚动速度（像素/帧）
+    const uint16_t frame_delay = 10;  // 帧间隔（毫秒）
+    uint16_t screen_width = u8g2_GetDisplayWidth(&u8g2);
+
+    // 初始偏移量设置为屏幕宽度（文本从右侧进入）
+    scroll_offset = screen_width;
+  for (;;) {
+    // 绘制滚动文本（Y坐标32为屏幕中间）
+        scroll_text(&u8g2, long_text, 63-6, scroll_offset);
+        
+        // 偏移量递减（文本左移）
+        scroll_offset += scroll_speed;
+        
+        // 无需显式重置，通过取模运算自然循环（在scroll_text中处理）
+    osDelay(frame_delay);
+  }
+  /* USER CODE END StartDefaultTask */
+}
 /* USER CODE END Application */
 

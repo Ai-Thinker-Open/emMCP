@@ -14,6 +14,10 @@
 #include "u8g2.h"
 #include "main.h"
 #include "oled_ssd1306.h"
+#include "utf8_to_gb2312.h"
+#include "cozmo.h"
+#include "u8g2_lable.h"
 
 void u8g2_user_init(u8g2_t *u8g2);
+void draw(u8g2_t *u8g2);
 #endif /* __U8G2_USER_H */

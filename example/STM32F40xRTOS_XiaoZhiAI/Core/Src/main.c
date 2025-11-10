@@ -20,11 +20,8 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include "dma.h"
-#include "oled_ssd1306.h"
 #include "spi.h"
 #include "tim.h"
-#include "u8g2.h"
-#include "u8g2_user.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -69,8 +66,59 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
   if (huart == &huart2) {
     uartPortRecvData((char*)rxBuffer, Size);
     HAL_UARTEx_ReceiveToIdle_DMA(&huart2, rxBuffer, RX_BUFFER_SIZE);
-  __HAL_DMA_DISABLE_IT(huart2.hdmarx, DMA_IT_HT);
+    __HAL_DMA_DISABLE_IT(&hdma_usart2_rx, DMA_IT_HT);
   } 
+}
+/**
+ * @brief Callback function for MCP events
+ * 
+ * @param event 
+ * @param type 
+ * @param param 
+ */
+void emMCP_EventCallback(emMCP_event_t event, mcp_server_tool_type_t type, void *param)
+{
+   char *param_str = (char *)param;
+   emMCP_log_debug("emMCP_EventCallback: event:%d,type:%d,param:%s", event,
+                   type, param_str);
+   
+  switch (event) {
+  case emMCP_EVENT_AI_MCP_Text: {
+    cJSON *Text_root = cJSON_Parse(param_str);
+    cJSON *state = cJSON_GetObjectItem(Text_root, "state");
+    if (state->valueint) {
+        memset(long_text, 0, 128);
+        cJSON *text = cJSON_GetObjectItem(Text_root, "text");
+        strcpy(long_text, text->valuestring);
+      }else {
+        memset(long_text, 0, 128);
+        strcpy(long_text, "聆听中...");
+      }
+    cJSON_Delete(Text_root);
+  } break;
+  case emMCP_EVENT_AI_SLEEP: {
+    memset(long_text, 0, 128);
+    strcpy(long_text, WELCOME_MEG);
+  } break;
+  case emMCP_EVENT_AI_WAKE: {
+     memset(long_text, 0, 128);
+    strcpy(long_text, "聆听中...");
+  } break;
+  case emMCP_EVENT_AI_START:
+     memset(long_text, 0, 128);
+    strcpy(long_text, "正在启动:...");
+    break;
+  case emMCP_EVENT_AI_WIFI_CONNNECT:
+    memset(long_text, 0, 128);
+    strcpy(long_text, "WiFi连接成功");
+    osDelay(1000);
+    memset(long_text, 0, 128);
+    strcpy(long_text, WELCOME_MEG);
+    break;
+  default:
+    break;
+  
+  }
 }
 
 
@@ -116,10 +164,9 @@ int main(void)
   OLED_DisplayTurn(0);
   OLED_Clear();
   u8g2_user_init(&u8g2);
-  // OLED_Display_UTF8(32+8, 0, "小安AI");
-  // OLED_Display_UTF8(16+8, 3, "你好，世界!");
+
   HAL_UARTEx_ReceiveToIdle_DMA(&huart2, rxBuffer, RX_BUFFER_SIZE);
-  __HAL_DMA_DISABLE_IT(huart2.hdmarx, DMA_IT_HT);
+  __HAL_DMA_DISABLE_IT(&hdma_usart2_rx, DMA_IT_HT);
   emMCP_Init(&emMCP);
 
   /* USER CODE END 2 */
@@ -167,7 +214,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
   RCC_OscInitStruct.PLL.PLLM = 8;
-  RCC_OscInitStruct.PLL.PLLN = 160;
+  RCC_OscInitStruct.PLL.PLLN = 168;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 4;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)

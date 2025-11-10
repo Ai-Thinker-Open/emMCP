@@ -17,6 +17,40 @@
 #include "u8x8.h"
 #include <stdint.h>
 
+
+void draw(u8g2_t *u8g2)
+{
+    u8g2_SetFontMode(u8g2, 1); /*字体模式选择*/
+    u8g2_SetFontDirection(u8g2, 0); /*字体方向选择*/
+    u8g2_SetFont(u8g2, u8g2_font_inb24_mf); /*字库选择*/
+    u8g2_DrawStr(u8g2, 0, 20, "U");
+
+    u8g2_SetFontDirection(u8g2, 1);
+    u8g2_SetFont(u8g2, u8g2_font_inb30_mn);
+    u8g2_DrawStr(u8g2, 21,8,"8");
+
+    u8g2_SetFontDirection(u8g2, 0);
+    u8g2_SetFont(u8g2, u8g2_font_inb24_mf);
+    u8g2_DrawStr(u8g2, 51,30,"g");
+    u8g2_DrawStr(u8g2, 67,30,"\xb2");
+
+    u8g2_DrawHLine(u8g2, 2, 35, 47);
+    u8g2_DrawHLine(u8g2, 3, 36, 47);
+    u8g2_DrawVLine(u8g2, 45, 32, 12);
+    u8g2_DrawVLine(u8g2, 46, 33, 12);
+
+    u8g2_SetFont(u8g2, u8g2_font_4x6_tr);
+    u8g2_DrawStr(u8g2, 1,54,"github.com/olikraus/u8g2");
+}
+/**
+ * @brief u8x8 4wire spi 回调函数
+ * 
+ * @param u8x8 
+ * @param msg 
+ * @param arg_int 
+ * @param arg_ptr 
+ * @return uint8_t 
+ */
 static uint8_t u8x8_bute_4wire_hw_spi(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int,void *arg_ptr)
 {
   switch (msg) {
@@ -41,7 +75,15 @@ static uint8_t u8x8_bute_4wire_hw_spi(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int
   }
   return 1 ;
 }
-
+/**
+ * @brief u8x8 gpio delay 回调函数
+ * 
+ * @param u8x8 
+ * @param msg 
+ * @param arg_int 
+ * @param arg_ptr 
+ * @return uint8_t 
+ */
 static uint8_t u8x8_gpio_and_delay(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, void *arg_ptr)
 {
     switch (msg) {
@@ -61,15 +103,29 @@ static uint8_t u8x8_gpio_and_delay(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int, v
     }
     return 1 ;
 }
+/**
+ * @brief u8g2 初始化
+ * 
+ * @param u8g2 
+ */
 void u8g2_user_init(u8g2_t *u8g2)
 {
   u8g2_Setup_ssd1306_128x64_noname_f(u8g2, U8G2_R0, u8x8_bute_4wire_hw_spi, u8x8_gpio_and_delay);
   u8g2_InitDisplay(u8g2);
   u8g2_SetPowerSave(u8g2, 0);
   u8g2_ClearBuffer(u8g2);
-  HAL_Delay(10);
-  u8g2_DrawLine(u8g2, 0, 0, 128, 63);
-  u8g2_DrawLine(u8g2, 127, 0, 0, 63);
-  u8g2_SendBuffer(u8g2);
-  HAL_Delay(1000);
 }
+
+// // U8G2解码函数：将Unicode转换为GB2312，再调用GT20L61S读取
+// uint8_t u8g2_font_decode_gb2312(u8g2_t *u8g2, uint16_t unicode, uint8_t *buf, uint8_t buf_len) {
+//   uint8_t gb2312[2];
+//   utf8_to_unicode((char *)buf, &buf_len);
+  
+//   // 1. 将Unicode转换为GB2312编码（需实现转换函数，可借助查表或库）
+//   if (unicode_to_gb2312(unicode, gb2312) != 0) {
+//     return 0;  // 转换失败
+//   }
+//   // 2. 从GT20L61S读取该GB2312编码的点阵
+//   GT20L61S_GetGB2312Char(gb2312, buf);
+//   return 16;  // 返回读取的字节数（16x16点阵）
+// }
