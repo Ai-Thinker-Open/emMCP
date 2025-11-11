@@ -54,7 +54,8 @@ static uint8_t u8x8_bute_4wire_hw_spi(u8x8_t *u8x8, uint8_t msg, uint8_t arg_int
 {
   switch (msg) {
   case U8X8_MSG_BYTE_SEND:
-      HAL_SPI_Transmit(&hspi1, (uint8_t*)arg_ptr, arg_int, 100);
+    HAL_SPI_Transmit(&hspi1, (uint8_t *)arg_ptr, arg_int,100);
+    
       break;
   case U8X8_MSG_BYTE_INIT:
     break;
@@ -115,16 +116,3 @@ void u8g2_user_init(u8g2_t *u8g2)
   u8g2_ClearBuffer(u8g2);
 }
 
-// // U8G2解码函数：将Unicode转换为GB2312，再调用GT20L61S读取
-// uint8_t u8g2_font_decode_gb2312(u8g2_t *u8g2, uint16_t unicode, uint8_t *buf, uint8_t buf_len) {
-//   uint8_t gb2312[2];
-//   utf8_to_unicode((char *)buf, &buf_len);
-  
-//   // 1. 将Unicode转换为GB2312编码（需实现转换函数，可借助查表或库）
-//   if (unicode_to_gb2312(unicode, gb2312) != 0) {
-//     return 0;  // 转换失败
-//   }
-//   // 2. 从GT20L61S读取该GB2312编码的点阵
-//   GT20L61S_GetGB2312Char(gb2312, buf);
-//   return 16;  // 返回读取的字节数（16x16点阵）
-// }

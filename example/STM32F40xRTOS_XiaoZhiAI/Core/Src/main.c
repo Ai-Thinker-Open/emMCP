@@ -20,6 +20,7 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include "dma.h"
+#include "oled_ssd1306.h"
 #include "spi.h"
 #include "tim.h"
 #include "usart.h"
@@ -76,50 +77,49 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
  * @param type 
  * @param param 
  */
-void emMCP_EventCallback(emMCP_event_t event, mcp_server_tool_type_t type, void *param)
-{
-   char *param_str = (char *)param;
-   emMCP_log_debug("emMCP_EventCallback: event:%d,type:%d,param:%s", event,
-                   type, param_str);
+// void emMCP_EventCallback(emMCP_event_t event, mcp_server_tool_type_t type, void *param)
+// {
+//    char *param_str = (char *)param;
+//    emMCP_log_debug("emMCP_EventCallback: event:%d,type:%d,param:%s", event,
+//                    type, param_str);
    
-  switch (event) {
-  case emMCP_EVENT_AI_MCP_Text: {
-    cJSON *Text_root = cJSON_Parse(param_str);
-    cJSON *state = cJSON_GetObjectItem(Text_root, "state");
-    if (state->valueint) {
-        memset(long_text, 0, 128);
-        cJSON *text = cJSON_GetObjectItem(Text_root, "text");
-        strcpy(long_text, text->valuestring);
-      }else {
-        memset(long_text, 0, 128);
-        strcpy(long_text, "聆听中...");
-      }
-    cJSON_Delete(Text_root);
-  } break;
-  case emMCP_EVENT_AI_SLEEP: {
-    memset(long_text, 0, 128);
-    strcpy(long_text, WELCOME_MEG);
-  } break;
-  case emMCP_EVENT_AI_WAKE: {
-     memset(long_text, 0, 128);
-    strcpy(long_text, "聆听中...");
-  } break;
-  case emMCP_EVENT_AI_START:
-     memset(long_text, 0, 128);
-    strcpy(long_text, "正在启动:...");
-    break;
-  case emMCP_EVENT_AI_WIFI_CONNNECT:
-    memset(long_text, 0, 128);
-    strcpy(long_text, "WiFi连接成功");
-    osDelay(1000);
-    memset(long_text, 0, 128);
-    strcpy(long_text, WELCOME_MEG);
-    break;
-  default:
-    break;
-  
-  }
-}
+//   switch (event) {
+//   case emMCP_EVENT_AI_MCP_Text: {
+//     cJSON *Text_root = cJSON_Parse(param_str);
+//     cJSON *state = cJSON_GetObjectItem(Text_root, "state");
+//     if (state->valueint) {
+//         memset(long_text, 0, 128);
+//         cJSON *text = cJSON_GetObjectItem(Text_root, "text");
+//         strcpy(long_text, text->valuestring);
+//       }else {
+//         memset(long_text, 0, 128);
+//         strcpy(long_text, "聆听中...");
+//       }
+//     cJSON_Delete(Text_root);
+//   } break;
+//   case emMCP_EVENT_AI_SLEEP: {
+//     memset(long_text, 0, 128);
+//     strcpy(long_text, WELCOME_MEG);
+//   } break;
+//   case emMCP_EVENT_AI_WAKE: {
+//     memset(long_text, 0, 128);
+//     strcpy(long_text, "聆听中...");
+//   } break;
+//   case emMCP_EVENT_AI_START:
+//      memset(long_text, 0, 128);
+//     strcpy(long_text, "正在启动:...");
+//     break;
+//   case emMCP_EVENT_AI_WIFI_CONNNECT:
+//     memset(long_text, 0, 128);
+//     strcpy(long_text, "WiFi连接成功");
+//     osDelay(1000);
+//     memset(long_text, 0, 128);
+//     strcpy(long_text, WELCOME_MEG);
+//     break;
+//   default:
+//     break;
+//   }
+// }
 
 
 /* USER CODE END 0 */
@@ -163,8 +163,10 @@ int main(void)
   OLED_ColorTurn(0);
   OLED_DisplayTurn(0);
   OLED_Clear();
-  u8g2_user_init(&u8g2);
-
+  OLED_Display_UTF8(0,16, "乐");
+  // OLED_Display_8x16(0, 16, "A");
+  // u8g2_user_init(&u8g2);
+  OLED_Display_UTF8(0, 32, "A");
   HAL_UARTEx_ReceiveToIdle_DMA(&huart2, rxBuffer, RX_BUFFER_SIZE);
   __HAL_DMA_DISABLE_IT(&hdma_usart2_rx, DMA_IT_HT);
   emMCP_Init(&emMCP);

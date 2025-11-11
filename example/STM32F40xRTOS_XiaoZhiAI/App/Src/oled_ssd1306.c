@@ -238,6 +238,10 @@ void OLED_Display_GB2312_string(uint8_t x,uint8_t y,char *text)
 			addrLow=(fontaddr&0xff);            
 			
 			OLED_get_data_from_ROM(addrHigh,addrMid,addrLow,fontbuf,32);
+			for (size_t i=0; i<32; i++) {
+				log_printf("%02x ",fontbuf[i]);
+                        }
+                         log_printf("\r\n");
 			OLED_Display_16x16(x,y,fontbuf);
 			x+=16;
 			i+=2;
@@ -267,8 +271,10 @@ void OLED_Display_GB2312_string(uint8_t x,uint8_t y,char *text)
 			addrHigh=(fontaddr&0xff0000)>>16;
 			addrMid=(fontaddr&0xff00)>>8;
 			addrLow=fontaddr&0xff;
+
+            OLED_get_data_from_ROM(addrHigh, addrMid, addrLow, fontbuf, 16);
+                       
 			
-			OLED_get_data_from_ROM(addrHigh,addrMid,addrLow,fontbuf,16);
 			OLED_Display_8x16(x,y,fontbuf);
 			x+=8;
 			i+=1;
@@ -277,8 +283,6 @@ void OLED_Display_GB2312_string(uint8_t x,uint8_t y,char *text)
 			i++;
   }
 }
-
-
 // OLED��ʾUTF-8�ַ���
 void OLED_Display_UTF8(uint8_t x, uint8_t y, const char *text) {
     uint8_t i = 0;
@@ -298,7 +302,9 @@ void OLED_Display_UTF8(uint8_t x, uint8_t y, const char *text) {
             i += byte_len;
             continue;
         }
-        OLED_get_data_from_ROM(fontaddr>>16&0XFF, fontaddr>>8&0XFF, fontaddr&0XFF, fontbuf, 2);
+        OLED_get_data_from_ROM(fontaddr >> 16 & 0XFF, fontaddr >> 8 & 0XFF,
+                               fontaddr & 0XFF, fontbuf, 2);
+        log_info("0x%02x%02x",fontbuf[0], fontbuf[1]);
         OLED_Display_GB2312_string(x, y, (char*)fontbuf);
         x += 16;
         i += byte_len;
@@ -313,8 +319,12 @@ void OLED_Display_UTF8(uint8_t x, uint8_t y, const char *text) {
 		addrHigh=(fontaddr&0xff0000)>>16;
 		addrMid=(fontaddr&0xff00)>>8;
 		addrLow=fontaddr&0xff;
-			
-		OLED_get_data_from_ROM(addrHigh,addrMid,addrLow,fontbuf,16);
+
+        OLED_get_data_from_ROM(addrHigh, addrMid, addrLow, fontbuf, 16);
+        for (size_t i=0; i<16; i++) {
+			log_printf("%02x ",fontbuf[i]);
+        }
+        log_printf("\r\n");
 		OLED_Display_8x16(x,y,fontbuf);
         x += 8;
         i+=1;
@@ -383,7 +393,7 @@ void OLED_ShowNum(uint8_t x,uint8_t y,float num1,uint8_t len)
 
 //OLED的初始化
 void OLED_Init(void) {
-  HAL_Delay(100);
+
   OLED_WR_Byte(0xAE,OLED_CMD);//--turn off oled panel
   OLED_WR_Byte(0x00,OLED_CMD);//---set low column address
   OLED_WR_Byte(0x10,OLED_CMD);//---set high column address

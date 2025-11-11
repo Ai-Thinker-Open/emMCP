@@ -17,7 +17,7 @@
 #include "utf8_to_gb2312.h"
 #include "cozmo.h"
 #include "u8g2_lable.h"
-#include "boot_animation.h"
+#include "u8g2_gt20l16_font.h"
 
 void u8g2_user_init(u8g2_t *u8g2);
 void draw(u8g2_t *u8g2);

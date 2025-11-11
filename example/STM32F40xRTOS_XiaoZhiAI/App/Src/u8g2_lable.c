@@ -21,7 +21,7 @@
 void scroll_text(u8g2_t *u8g2, const char *text, uint8_t y_pos, int16_t offset) {
 
   // 选择支持中文的字体（确保字体包含所需字符集）
-    u8g2_SetFont(u8g2, u8g2_font_wqy13_t_gb2312b); 
+    
     
     uint16_t text_width = u8g2_GetUTF8Width(u8g2, text); // 文本总宽度
     uint16_t screen_width = u8g2_GetDisplayWidth(u8g2);  // 屏幕宽度
@@ -30,7 +30,7 @@ void scroll_text(u8g2_t *u8g2, const char *text, uint8_t y_pos, int16_t offset) 
     // 文本宽度小于屏幕时无需滚动，直接居中显示
     if (text_width <= screen_width) {
         u8g2_DrawUTF8(u8g2, (screen_width - text_width) / 2, y_pos, text);
-        u8g2_SendBuffer(u8g2);
+       
         return;
     }
     

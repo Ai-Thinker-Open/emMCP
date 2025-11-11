@@ -19,13 +19,9 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "FreeRTOS.h"
-#include "cmsis_os2.h"
-#include "oled_ssd1306.h"
 #include "task.h"
 #include "main.h"
 #include "cmsis_os.h"
-#include "u8g2.h"
-#include "u8g2_gt2016.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -139,6 +135,14 @@ void StartDefaultTask(void *argument)
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
+
+// 位反转函数
+void GT20_To_U8g2Buffer(uint8_t *gt20_data, uint8_t *u8g2_buffer) {
+    // 将竖置横排转换为U8g2需要的格式
+    for(uint8_t i=0; i<16; i++) {  // 16行
+        u8g2_buffer[i] = gt20_data[i];
+    }
+}
 void U8g2DemoTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
@@ -146,20 +150,27 @@ void U8g2DemoTask(void *argument)
     int16_t scroll_offset = 0;        // 初始偏移量（屏幕右侧外）
     const uint8_t scroll_speed = 1;   // 滚动速度（像素/帧）
     const uint16_t frame_delay = 10;  // 帧间隔（毫秒）
-    uint16_t screen_width = u8g2_GetDisplayWidth(&u8g2);
-    // 初始偏移量设置为屏幕宽度（文本从右侧进入）
-    scroll_offset = screen_width;
+    // uint16_t screen_width = u8g2_GetDisplayWidth(&u8g2);
+    // uint8_t u8g2_buffer[32] = {0};
+    // // u8g2_DrawUTF8FromGT20l16(&u8g2,0,32,"乐");
+    // // GT20_To_U8g2Buffer(le_col_data, u8g2_buffer);
+    // u8g2_ClearBuffer(&u8g2);
+    // // u8g2_DrawXBMP(&u8g2, 10, 0, 8, 1,  le_font_fixed);  // 宽8，高1
+    // // u8g2_DrawXBMP(&u8g2, 0, 0, 16, 16, bitmap_bytes);
+    // // u8g2_DrawBitmap(&u8g2, 0, 0, 1, 16, u8g2_buffer);
+    // // u8g2_SendBuffer(&u8g2);
+    // scroll_offset = screen_width;
+    // u8g2_SetFont(&u8g2, u8g2_font_wqy16_t_gb2312); 
     for (;;) {
-      u8g2_FirstPage(&u8g2);
-      do {
-          scroll_text(&u8g2, long_text, 63, scroll_offset);
-          u8g2_DrawUTF8(&u8g2, 16 + 8, 32, "欢迎使用小安AI");
-          scroll_offset += scroll_speed;
-          osDelay(frame_delay);
-      }while(u8g2_NextPage(&u8g2));
+      // u8g2_ClearBuffer(&u8g2);
+     
+      // scroll_text(&u8g2, long_text, 62, scroll_offset);
+      // scroll_offset += scroll_speed;
+      // // // u8g2_DrawUTF8FromGT20l16(&u8g2,0,32,"乐");
+      // u8g2_SendBuffer(&u8g2); 
       osDelay(frame_delay);
   }
   /* USER CODE END StartDefaultTask */
 }
 /* USER CODE END Application */
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
+
