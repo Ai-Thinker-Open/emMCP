@@ -120,7 +120,7 @@ void emMCP_EventCallback(emMCP_event_t event, mcp_server_tool_type_t type, void 
         }
     } else {
         memset(long_text, 0, 128);
-        current_emotion = U8G2_EMOTION_SURPRISED;
+        current_emotion = U8G2_EMOTION_SMILE_2;
         strcpy(long_text, "聆听中...");
     }
     cJSON_Delete(Text_root);
@@ -132,7 +132,7 @@ void emMCP_EventCallback(emMCP_event_t event, mcp_server_tool_type_t type, void 
   } break;
   case emMCP_EVENT_AI_WAKE: {
     memset(long_text, 0, 128);
-     current_emotion = U8G2_EMOTION_SURPRISED;
+     current_emotion = U8G2_EMOTION_SMILE_2;
     strcpy(long_text, "聆听中...");
   } break;
   case emMCP_EVENT_AI_START:

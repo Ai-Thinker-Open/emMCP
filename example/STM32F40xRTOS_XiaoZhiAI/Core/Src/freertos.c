@@ -60,7 +60,7 @@ const osThreadAttr_t defaultTask_attributes = {
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
 Cozmo cozmo;
-char long_text[128] = "睡眠中,请使用\"你好小安\"唤醒我!";
+char long_text[128] = "坐等你使用\"你好小安\"唤醒我!";
 osThreadId_t u8g2Demo_TaskHandle;
 const osThreadAttr_t u8g2Demo_Task_attributes = {
     .name = "u8g2Demo",
