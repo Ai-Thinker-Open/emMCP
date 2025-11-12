@@ -18,13 +18,15 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "cJSON.h"
 #include "cmsis_os.h"
 #include "dma.h"
-#include "oled_ssd1306.h"
 #include "spi.h"
 #include "tim.h"
+#include "u8g2_user.h"
 #include "usart.h"
 #include "gpio.h"
+#include <string.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -77,49 +79,80 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
  * @param type 
  * @param param 
  */
-// void emMCP_EventCallback(emMCP_event_t event, mcp_server_tool_type_t type, void *param)
-// {
-//    char *param_str = (char *)param;
-//    emMCP_log_debug("emMCP_EventCallback: event:%d,type:%d,param:%s", event,
-//                    type, param_str);
+void emMCP_EventCallback(emMCP_event_t event, mcp_server_tool_type_t type, void *param)
+{
+   char *param_str = (char *)param;
+   emMCP_log_debug("emMCP_EventCallback: event:%d,type:%d,param:%s", event,
+                   type, param_str);
    
-//   switch (event) {
-//   case emMCP_EVENT_AI_MCP_Text: {
-//     cJSON *Text_root = cJSON_Parse(param_str);
-//     cJSON *state = cJSON_GetObjectItem(Text_root, "state");
-//     if (state->valueint) {
-//         memset(long_text, 0, 128);
-//         cJSON *text = cJSON_GetObjectItem(Text_root, "text");
-//         strcpy(long_text, text->valuestring);
-//       }else {
-//         memset(long_text, 0, 128);
-//         strcpy(long_text, "聆听中...");
-//       }
-//     cJSON_Delete(Text_root);
-//   } break;
-//   case emMCP_EVENT_AI_SLEEP: {
-//     memset(long_text, 0, 128);
-//     strcpy(long_text, WELCOME_MEG);
-//   } break;
-//   case emMCP_EVENT_AI_WAKE: {
-//     memset(long_text, 0, 128);
-//     strcpy(long_text, "聆听中...");
-//   } break;
-//   case emMCP_EVENT_AI_START:
-//      memset(long_text, 0, 128);
-//     strcpy(long_text, "正在启动:...");
-//     break;
-//   case emMCP_EVENT_AI_WIFI_CONNNECT:
-//     memset(long_text, 0, 128);
-//     strcpy(long_text, "WiFi连接成功");
-//     osDelay(1000);
-//     memset(long_text, 0, 128);
-//     strcpy(long_text, WELCOME_MEG);
-//     break;
-//   default:
-//     break;
-//   }
-// }
+  switch (event) {
+  case emMCP_EVENT_AI_MCP_Text: {
+    cJSON *Text_root = cJSON_Parse(param_str);
+    cJSON *state = cJSON_GetObjectItem(Text_root, "state");
+    if (state->valueint) {
+        memset(long_text, 0, 128);
+        cJSON *text = cJSON_GetObjectItem(Text_root, "text");
+        if (text != NULL) {
+            strcpy(long_text, text->valuestring);
+        }
+        // 解析心情
+        cJSON *emotion = cJSON_GetObjectItem(Text_root, "emotion");
+        if (emotion != NULL) {
+            if (strcmp(emotion->valuestring, "happy") == 0) {
+                current_emotion = U8G2_EMOTION_HAPPY;
+            } else if (strcmp(emotion->valuestring, "sad") == 0) {
+                current_emotion = U8G2_EMOTION_SAD;
+            } else if (strcmp(emotion->valuestring, "angry") == 0) {
+                current_emotion = U8G2_EMOTION_ANGE;
+            } else if (strcmp(emotion->valuestring, "cool") == 0) {
+                current_emotion = U8G2_EMOTION_COOL;
+            } else if (strcmp(emotion->valuestring, "surprised") == 0 || strcmp(emotion->valuestring, "shocked") == 0) {
+                current_emotion = U8G2_EMOTION_SURPRISED;
+            } else if (strcmp(emotion->valuestring, "winking") == 0 || 
+                       strcmp(emotion->valuestring, "confident") == 0 ||
+                       strcmp(emotion->valuestring, "silly") == 0) {
+                current_emotion = U8G2_EMOTION_PLAYFUL;
+            } else if (strcmp(emotion->valuestring, "loving") == 0) {
+                current_emotion = U8G2_EMOTION_PROUD;
+            } else {
+                current_emotion = U8G2_EMOTION_HAPPY;
+            }
+        }
+    } else {
+        memset(long_text, 0, 128);
+        current_emotion = U8G2_EMOTION_SURPRISED;
+        strcpy(long_text, "聆听中...");
+    }
+    cJSON_Delete(Text_root);
+  } break;
+  case emMCP_EVENT_AI_SLEEP: {
+    memset(long_text, 0, 128);
+    current_emotion = U8G2_EMOTION_NORMAL;
+    strcpy(long_text, WELCOME_MEG);
+  } break;
+  case emMCP_EVENT_AI_WAKE: {
+    memset(long_text, 0, 128);
+     current_emotion = U8G2_EMOTION_SURPRISED;
+    strcpy(long_text, "聆听中...");
+  } break;
+  case emMCP_EVENT_AI_START:
+    memset(long_text, 0, 128);
+     current_emotion =U8G2_EMOTION_DIE;
+    strcpy(long_text, "正在启动...");
+    break;
+  case emMCP_EVENT_AI_WIFI_CONNNECT:
+    memset(long_text, 0, 128);
+    strcpy(long_text, "WiFi连接成功");
+    osDelay(1000);
+    memset(long_text, 0, 128);
+    current_emotion = U8G2_EMOTION_NORMAL;
+    strcpy(long_text, WELCOME_MEG);
+
+    break;
+  default:
+    break;
+  }
+}
 
 
 /* USER CODE END 0 */
@@ -163,10 +196,8 @@ int main(void)
   OLED_ColorTurn(0);
   OLED_DisplayTurn(0);
   OLED_Clear();
-  OLED_Display_UTF8(0,16, "乐");
-  // OLED_Display_8x16(0, 16, "A");
-  // u8g2_user_init(&u8g2);
-  OLED_Display_UTF8(0, 32, "A");
+  u8g2_user_init(&u8g2);
+
   HAL_UARTEx_ReceiveToIdle_DMA(&huart2, rxBuffer, RX_BUFFER_SIZE);
   __HAL_DMA_DISABLE_IT(&hdma_usart2_rx, DMA_IT_HT);
   emMCP_Init(&emMCP);

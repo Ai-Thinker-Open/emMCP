@@ -19,9 +19,11 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "FreeRTOS.h"
+#include "stm32f4xx_hal.h"
 #include "task.h"
 #include "main.h"
 #include "cmsis_os.h"
+#include "u8g2.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -62,7 +64,7 @@ char long_text[128] = "睡眠中,请使用\"你好小安\"唤醒我!";
 osThreadId_t u8g2Demo_TaskHandle;
 const osThreadAttr_t u8g2Demo_Task_attributes = {
     .name = "u8g2Demo",
-    .stack_size = 256 * 4,
+    .stack_size = 512 * 4,
     .priority = (osPriority_t)osPriorityLow,
 };
 
@@ -135,14 +137,9 @@ void StartDefaultTask(void *argument)
 
 /* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
+// e0 f0 98 8c 98 f0 e0 00 0f 0f 00 00 00 0f 0f 00
 
-// 位反转函数
-void GT20_To_U8g2Buffer(uint8_t *gt20_data, uint8_t *u8g2_buffer) {
-    // 将竖置横排转换为U8g2需要的格式
-    for(uint8_t i=0; i<16; i++) {  // 16行
-        u8g2_buffer[i] = gt20_data[i];
-    }
-}
+
 void U8g2DemoTask(void *argument)
 {
   /* USER CODE BEGIN StartDefaultTask */
@@ -150,25 +147,26 @@ void U8g2DemoTask(void *argument)
     int16_t scroll_offset = 0;        // 初始偏移量（屏幕右侧外）
     const uint8_t scroll_speed = 1;   // 滚动速度（像素/帧）
     const uint16_t frame_delay = 10;  // 帧间隔（毫秒）
-    // uint16_t screen_width = u8g2_GetDisplayWidth(&u8g2);
-    // uint8_t u8g2_buffer[32] = {0};
-    // // u8g2_DrawUTF8FromGT20l16(&u8g2,0,32,"乐");
-    // // GT20_To_U8g2Buffer(le_col_data, u8g2_buffer);
-    // u8g2_ClearBuffer(&u8g2);
-    // // u8g2_DrawXBMP(&u8g2, 10, 0, 8, 1,  le_font_fixed);  // 宽8，高1
-    // // u8g2_DrawXBMP(&u8g2, 0, 0, 16, 16, bitmap_bytes);
-    // // u8g2_DrawBitmap(&u8g2, 0, 0, 1, 16, u8g2_buffer);
-    // // u8g2_SendBuffer(&u8g2);
-    // scroll_offset = screen_width;
-    // u8g2_SetFont(&u8g2, u8g2_font_wqy16_t_gb2312); 
+
+    uint16_t screen_width = u8g2_GetDisplayWidth(&u8g2);
+
+    //开机图标，显示一个小机器人，encoding=0x32，其他值参考：https://github.com/olikraus/u8g2/wiki/fntgrpstreamline
+    u8g2_SetFont(&u8g2, u8g2_font_streamline_technology_t);
+    u8g2_DrawGlyphX2(&u8g2, 40, 54, 0x32);
+    u8g2_SendBuffer(&u8g2);
+    HAL_Delay(1000);
+    scroll_offset = screen_width;
     for (;;) {
-      // u8g2_ClearBuffer(&u8g2);
-     
-      // scroll_text(&u8g2, long_text, 62, scroll_offset);
-      // scroll_offset += scroll_speed;
-      // // // u8g2_DrawUTF8FromGT20l16(&u8g2,0,32,"乐");
-      // u8g2_SendBuffer(&u8g2); 
-      osDelay(frame_delay);
+     u8g2_ClearBuffer(&u8g2);  // 清空缓冲区
+
+     // 1. 重绘静态文本（必须在循环内重新绘制，否则会被清除）
+    u8g2_SetFont(&u8g2,u8g2_font_emoticons21_tr);
+    u8g2_DrawGlyphX2(&u8g2, 42, 44, current_emotion);
+    u8g2_SetFont(&u8g2,u8g2_font_wqy14_t_gb2312);
+    scroll_text(&u8g2, long_text, 62, scroll_offset);
+    scroll_offset += scroll_speed;
+    u8g2_SendBuffer(&u8g2);
+    osDelay(frame_delay);
   }
   /* USER CODE END StartDefaultTask */
 }
