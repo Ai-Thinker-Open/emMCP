@@ -35,6 +35,7 @@ extern "C" {
 #include "log.h"
 #include "oled_ssd1306.h"
 #include "u8g2_user.h"
+#include "digital_ws2812.h"
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -79,6 +80,7 @@ void Error_Handler(void);
 #define WELCOME_MEG "坐等你使用\"你好小安\"唤醒我!"
 extern u8g2_t u8g2;
 extern char long_text[128];
+
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

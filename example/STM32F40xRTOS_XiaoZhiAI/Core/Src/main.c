@@ -18,15 +18,13 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "cJSON.h"
 #include "cmsis_os.h"
 #include "dma.h"
+#include "log.h"
 #include "spi.h"
-#include "tim.h"
-#include "u8g2_user.h"
 #include "usart.h"
 #include "gpio.h"
-#include <string.h>
+#include "ws2812.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -54,6 +52,10 @@
 uint8_t rxBuffer[RX_BUFFER_SIZE];
 emMCP_t emMCP;
 u8g2_t u8g2;
+ws2812_strip_t ws2812_strip = {
+    .led_count = WS2812_LED_NUM,
+    .brightness = 0.5,
+};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -67,7 +69,8 @@ void MX_FREERTOS_Init(void);
 /* USER CODE BEGIN 0 */
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
   if (huart == &huart2) {
-    uartPortRecvData((char*)rxBuffer, Size);
+    uartPortRecvData((char *)rxBuffer, Size);
+    
     HAL_UARTEx_ReceiveToIdle_DMA(&huart2, rxBuffer, RX_BUFFER_SIZE);
     __HAL_DMA_DISABLE_IT(&hdma_usart2_rx, DMA_IT_HT);
   } 
@@ -93,34 +96,41 @@ void emMCP_EventCallback(emMCP_event_t event, mcp_server_tool_type_t type, void 
         memset(long_text, 0, 128);
         cJSON *text = cJSON_GetObjectItem(Text_root, "text");
         if (text != NULL) {
-            strcpy(long_text, text->valuestring);
+          strcpy(long_text, text->valuestring);
+          // 判断是否在播放音乐
+          if (strstr(text->valuestring, "play_music...") != NULL) {
+            // 显示音乐图标
+            current_emotion = U8G2_EMOTION_MUSIC;
+            return;
+            }
         }
+        
         // 解析心情
         cJSON *emotion = cJSON_GetObjectItem(Text_root, "emotion");
         if (emotion != NULL) {
             if (strcmp(emotion->valuestring, "happy") == 0) {
-                current_emotion = U8G2_EMOTION_HAPPY;
+                current_emotion =current_emotion==U8G2_EMOTION_MUSIC?U8G2_EMOTION_MUSIC:U8G2_EMOTION_HAPPY;
             } else if (strcmp(emotion->valuestring, "sad") == 0) {
-                current_emotion = U8G2_EMOTION_SAD;
+                current_emotion =current_emotion==U8G2_EMOTION_MUSIC?U8G2_EMOTION_MUSIC:U8G2_EMOTION_SAD;
             } else if (strcmp(emotion->valuestring, "angry") == 0) {
-                current_emotion = U8G2_EMOTION_ANGE;
+                current_emotion =current_emotion==U8G2_EMOTION_MUSIC?U8G2_EMOTION_MUSIC: U8G2_EMOTION_ANGE;
             } else if (strcmp(emotion->valuestring, "cool") == 0) {
-                current_emotion = U8G2_EMOTION_COOL;
+                current_emotion =current_emotion==U8G2_EMOTION_MUSIC?U8G2_EMOTION_MUSIC: U8G2_EMOTION_COOL;
             } else if (strcmp(emotion->valuestring, "surprised") == 0 || strcmp(emotion->valuestring, "shocked") == 0) {
-                current_emotion = U8G2_EMOTION_SURPRISED;
+                current_emotion =current_emotion==U8G2_EMOTION_MUSIC?U8G2_EMOTION_MUSIC: U8G2_EMOTION_SURPRISED;
             } else if (strcmp(emotion->valuestring, "winking") == 0 || 
                        strcmp(emotion->valuestring, "confident") == 0 ||
                        strcmp(emotion->valuestring, "silly") == 0) {
-                current_emotion = U8G2_EMOTION_PLAYFUL;
+                current_emotion =current_emotion==U8G2_EMOTION_MUSIC?U8G2_EMOTION_MUSIC: U8G2_EMOTION_PLAYFUL;
             } else if (strcmp(emotion->valuestring, "loving") == 0) {
-                current_emotion = U8G2_EMOTION_PROUD;
+                current_emotion =current_emotion==U8G2_EMOTION_MUSIC?U8G2_EMOTION_MUSIC: U8G2_EMOTION_PROUD;
             } else {
-                current_emotion = U8G2_EMOTION_HAPPY;
+                current_emotion =current_emotion==U8G2_EMOTION_MUSIC?U8G2_EMOTION_MUSIC: U8G2_EMOTION_HAPPY;
             }
         }
     } else {
         memset(long_text, 0, 128);
-        current_emotion = U8G2_EMOTION_SMILE_2;
+        current_emotion = U8G2_EMOTION_SMILE;
         strcpy(long_text, "聆听中...");
     }
     cJSON_Delete(Text_root);
@@ -149,12 +159,12 @@ void emMCP_EventCallback(emMCP_event_t event, mcp_server_tool_type_t type, void 
     strcpy(long_text, WELCOME_MEG);
 
     break;
-  default:
+  default: 
     break;
   }
 }
 
-
+ 
 /* USER CODE END 0 */
 
 /**
@@ -190,7 +200,6 @@ int main(void)
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
   MX_SPI1_Init();
-  MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
   OLED_Init();
   OLED_ColorTurn(0);
@@ -201,7 +210,8 @@ int main(void)
   HAL_UARTEx_ReceiveToIdle_DMA(&huart2, rxBuffer, RX_BUFFER_SIZE);
   __HAL_DMA_DISABLE_IT(&hdma_usart2_rx, DMA_IT_HT);
   emMCP_Init(&emMCP);
-
+  ws2812_init(&ws2812_strip);
+  ws2812_set_all_pixels_color(0x00, 0, 0x00, 0);
   /* USER CODE END 2 */
 
   /* Init scheduler */

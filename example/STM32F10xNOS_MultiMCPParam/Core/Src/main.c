@@ -71,37 +71,38 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 void emMCP_SetRGBHandler(void *arg) {
-  cJSON *param = (cJSON *)arg;
-  cJSON *enable = cJSON_GetObjectItem(param, "enable");
-  cJSON *ch_red = cJSON_GetObjectItem(param, "red");
-  cJSON *ch_green = cJSON_GetObjectItem(param, "green");
-  cJSON *ch_blue = cJSON_GetObjectItem(param, "blue");
-  if (enable != NULL) {
-    if (cJSON_IsTrue(enable)) {
-      log_info("RGB enable is true");
-    } else {
-      log_info("RGB enable is false");
+    cJSON *param = (cJSON *)arg;
+    cJSON *enable = cJSON_GetObjectItem(param, "enable");
+    cJSON *ch_red = cJSON_GetObjectItem(param, "red");
+    cJSON *ch_green = cJSON_GetObjectItem(param, "green");
+    cJSON *ch_blue = cJSON_GetObjectItem(param, "blue");
+    if (enable != NULL) {
+        if (cJSON_IsTrue(enable)) {
+            log_info("RGB enable is true");
+        } else {
+            log_info("RGB enable is false");
+        }
     }
-  }
-  if (ch_red != NULL) {
-    log_info("RGB red is %d", ch_red->valueint);
-  }
-  if (ch_green != NULL) {
-    log_info("RGB green is %d", ch_green->valueint);
-  }
-  if (ch_blue != NULL) {
-    log_info("RGB blue is %d", ch_blue->valueint);
-  }
-  // 返回控制结果
-  char *result = malloc(128);
-  sprintf(result, " {\"%s\":%s,\"%s\":%d,\"%s\":%d,\"%s\":%d}}", enable->string,
-          enable->valueint ? "true" : "false", ch_red->string, ch_red->valueint,
-          ch_green->string, ch_green->valueint, ch_blue->string,
-          ch_blue->valueint);
-  emMCP_ResponseValue(result);
-  free(result);
+    if (ch_red != NULL) {
+        log_info("RGB red is %d", ch_red->valueint);
+    }
+    if (ch_green != NULL) {
+        log_info("RGB green is %d", ch_green->valueint);
+    }
+    if (ch_blue != NULL) {
+        log_info("RGB blue is %d", ch_blue->valueint);
+    }
+    // 返回控制结果
+    char *result = malloc(128);
+    sprintf(result, " {\"%s\":%s,\"%s\":%d,\"%s\":%d,\"%s\":%d}",
+            enable->string,
+            enable->valueint ? "true" : "false",
+            ch_red->string, ch_red->valueint,
+            ch_green->string, ch_green->valueint,
+            ch_blue->string, ch_blue->valueint);
+    emMCP_ResponseValue(result);
+    free(result);
 }
-
 void emMCP_GetRGBHandler(void *arg) {}
 /* USER CODE END 0 */
 
@@ -149,41 +150,18 @@ int main(void) {
   emMCP_CheckAiVolume();
   rgb.name = "RGB彩灯";                      // 工具名称，保持唯一性
   rgb.description = "用来控制RGB彩灯的亮灭"; // 工具的功能描述
-  rgb.inputSchema.properties[0].name =
-      "enable"; // 属性指令，AI 通过这个指令发送命令
-  rgb.inputSchema.properties[0].description =
-      "是否打开RGB彩灯,true表示打开，false表示关闭,"
-      "查询时为null"; // 指令描述，AI 通过这个描述理解指令
-  rgb.inputSchema.properties[0].type =
-      MCP_SERVER_TOOL_TYPE_BOOLEAN; // 指令类型，AI
-                                    // 通过这个类型发送相对应的数据
-
-  rgb.inputSchema.properties[1].name =
-      "red"; // 属性指令，AI 通过这个指令发送命令
-  rgb.inputSchema.properties[1].description =
-      "RGB彩灯的红色,范围0-255,查询时为null"; // 指令描述，AI
-                                              // 通过这个描述理解指令
-  rgb.inputSchema.properties[1].type =
-      MCP_SERVER_TOOL_TYPE_NUMBER; // 指令类型，AI
-                                   // 通过这个类型发送相对应的数据
-
-  rgb.inputSchema.properties[2].name =
-      "green"; // 属性指令，AI 通过这个指令发送命令
-  rgb.inputSchema.properties[2].description =
-      "RGB彩灯的绿色,范围0-255,查询时为null"; // 指令描述，AI
-                                              // 通过这个描述理解指令
-  rgb.inputSchema.properties[2].type =
-      MCP_SERVER_TOOL_TYPE_NUMBER; // 指令类型，AI
-                                   // 通过这个类型发送相对应的数据
-
-  rgb.inputSchema.properties[3].name =
-      "blue"; // 属性指令，AI 通过这个指令发送命令
-  rgb.inputSchema.properties[3].description =
-      "RGB彩灯的蓝色,范围0-255,查询时为null"; // 指令描述，AI
-                                              // 通过这个描述理解指令
-  rgb.inputSchema.properties[3].type =
-      MCP_SERVER_TOOL_TYPE_NUMBER;               // 指令类型，AI
-                                                 // 通过这个类型发送相对应的数据
+  rgb.inputSchema.properties[0].name = "enable"; // 属性指令，AI 通过这个指令发送命令
+  rgb.inputSchema.properties[0].description = "是否打开RGB彩灯,true表示打开，false表示关闭查询时为null"; // 指令描述，AI 通过这个描述理解指令
+  rgb.inputSchema.properties[0].type = MCP_SERVER_TOOL_TYPE_BOOLEAN; // 指令类型，AI通过这个类型发送相对应的数据
+  rgb.inputSchema.properties[1].name = "red"; // 属性指令，AI 通过这个指令发送命令
+  rgb.inputSchema.properties[1].description = "RGB彩灯的红色,范围0-255,查询时为null"; // 指令描述，AI通过这个描述理解指令
+  rgb.inputSchema.properties[1].type = MCP_SERVER_TOOL_TYPE_NUMBER; // 指令类型，AI通过这个类型发送相对应的数据
+  rgb.inputSchema.properties[2].name = "green"; // 属性指令，AI 通过这个指令发送命令
+  rgb.inputSchema.properties[2].description = "RGB彩灯的绿色,范围0-255,查询时为null"; // 指令描述，AI通过这个描述理解指令
+  rgb.inputSchema.properties[2].type = MCP_SERVER_TOOL_TYPE_NUMBER; // 指令类型，AI通过这个类型发送相对应的数据
+  rgb.inputSchema.properties[3].name = "blue"; // 属性指令，AI 通过这个指令发送命令
+  rgb.inputSchema.properties[3].description = "RGB彩灯的蓝色,范围0-255,查询时为null"; // 指令描述，AI通过这个描述理解指令
+  rgb.inputSchema.properties[3].type = MCP_SERVER_TOOL_TYPE_NUMBER; // 指令类型，AI通过这个类型发送相对应的数据
   rgb.setRequestHandler = emMCP_SetRGBHandler;   // 设置控制回调
   rgb.checkRequestHandler = emMCP_GetRGBHandler; // 设置查询回调
 

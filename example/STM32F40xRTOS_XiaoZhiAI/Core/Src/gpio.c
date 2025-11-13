@@ -20,6 +20,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "gpio.h"
+#include "stm32f4xx_hal_gpio.h"
 
 /* USER CODE BEGIN 0 */
 
@@ -52,12 +53,22 @@ void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, OLED_DC_Pin|OLED_CS2_Pin|OLED_CS1_Pin, GPIO_PIN_SET);
 
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(WS2812_Pin_GPIO_Port, WS2812_Pin_Pin, GPIO_PIN_RESET);
+
   /*Configure GPIO pins : OLED_DC_Pin OLED_CS2_Pin OLED_CS1_Pin */
   GPIO_InitStruct.Pin = OLED_DC_Pin|OLED_CS2_Pin|OLED_CS1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_MEDIUM;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : WS2812_Pin_Pin */
+  GPIO_InitStruct.Pin = WS2812_Pin_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+  HAL_GPIO_Init(WS2812_Pin_GPIO_Port, &GPIO_InitStruct);
 
 }
 

@@ -42,7 +42,7 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined library search paths
 )
 
-file(GLOB SRC_FILES "App/Src/*.c" "emMCP/port/*.c" "emMCP/uart-mcp/*.c" "emMCP/uart-mcp/cJSON/*.c" "u8g2/csrc/*.c")
+file(GLOB SRC_FILES "App/Src/*.c" "App/ws2812/*.c"  "emMCP/port/*.c" "emMCP/uart-mcp/*.c" "emMCP/uart-mcp/cJSON/*.c" "u8g2/csrc/*.c" )
 # Add sources to executable
 target_sources( ${CMAKE_PROJECT_NAME} PRIVATE
 
@@ -55,6 +55,7 @@ target_sources( ${CMAKE_PROJECT_NAME} PRIVATE
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
    App/Inc
+   App/ws2812
    emMCP/port
    emMCP/uart-mcp
    emMCP/uart-mcp/cJSON
@@ -65,6 +66,8 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 # Add project symbols (macros)
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined symbols
+    # 声明 WS2812 使用 PWM 模式
+    WS281X_DIGITAL_MODE
 )
 
 # Remove wrong libob.a library dependency when using cpp files

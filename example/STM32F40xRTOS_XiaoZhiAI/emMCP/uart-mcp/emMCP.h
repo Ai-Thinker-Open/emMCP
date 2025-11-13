@@ -19,8 +19,8 @@
 
 #define emMCP_VERSION "1.0.0" // emMCP版本号
 
-#define MCP_SERVER_TOOL_NUMBLE_MAX 2			 // 工具数量
-#define MCP_SERVER_TOOL_PROPERTIES_NUM 5		 // 属性数量
+#define MCP_SERVER_TOOL_NUMBLE_MAX 1			 // 工具数量
+#define MCP_SERVER_TOOL_PROPERTIES_NUM 6		 // 属性数量
 #define MCP_SERVER_TOOL_METHODS_NUM 5			 // 方法数量
 #define MCP_SERVER_TOOL_METHODS_PARAMETERS_NUM 5 // 方法参数数量
 
