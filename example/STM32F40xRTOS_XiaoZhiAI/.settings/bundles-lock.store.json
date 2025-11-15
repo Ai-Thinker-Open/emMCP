@@ -1,6 +1,39 @@
 {
   "resolved": [
     {
+      "name": "adoptium-jre",
+      "version": "17.0.15+6.st.1",
+      "platform": "darwin",
+      "selected_by": [
+        {
+          "name": "adoptium-jre",
+          "version": ">=17.0.14+7.st.3"
+        }
+      ]
+    },
+    {
+      "name": "adoptium-jre",
+      "version": "17.0.15+6.st.1",
+      "platform": "x86_64-linux",
+      "selected_by": [
+        {
+          "name": "adoptium-jre",
+          "version": ">=17.0.14+7.st.3"
+        }
+      ]
+    },
+    {
+      "name": "adoptium-jre",
+      "version": "17.0.15+6.st.1",
+      "platform": "x86_64-windows",
+      "selected_by": [
+        {
+          "name": "adoptium-jre",
+          "version": ">=17.0.14+7.st.3"
+        }
+      ]
+    },
+    {
       "name": "cmake",
       "version": "4.0.1+st.3",
       "platform": "darwin",
@@ -30,6 +63,39 @@
         {
           "name": "cmake",
           "version": "4.0.1+st.3"
+        }
+      ]
+    },
+    {
+      "name": "gnu-gdb-for-stm32",
+      "version": "13.3.1+st.10",
+      "platform": "darwin",
+      "selected_by": [
+        {
+          "name": "gnu-gdb-for-stm32",
+          "version": "13.3.1+st.10"
+        }
+      ]
+    },
+    {
+      "name": "gnu-gdb-for-stm32",
+      "version": "13.3.1+st.10",
+      "platform": "x86_64-linux",
+      "selected_by": [
+        {
+          "name": "gnu-gdb-for-stm32",
+          "version": "13.3.1+st.10"
+        }
+      ]
+    },
+    {
+      "name": "gnu-gdb-for-stm32",
+      "version": "13.3.1+st.10",
+      "platform": "x86_64-windows",
+      "selected_by": [
+        {
+          "name": "gnu-gdb-for-stm32",
+          "version": "13.3.1+st.10"
         }
       ]
     },
@@ -239,6 +305,72 @@
         {
           "name": "stlink-gdbserver",
           "version": "7.10.0+st.3"
+        }
+      ]
+    },
+    {
+      "name": "stlink-server",
+      "version": "2.1.1+st.7",
+      "platform": "darwin",
+      "selected_by": [
+        {
+          "name": "stlink-server",
+          "version": "2.1.1+st.7"
+        }
+      ]
+    },
+    {
+      "name": "stlink-server",
+      "version": "2.1.1+st.7",
+      "platform": "x86_64-linux",
+      "selected_by": [
+        {
+          "name": "stlink-server",
+          "version": "2.1.1+st.7"
+        }
+      ]
+    },
+    {
+      "name": "stlink-server",
+      "version": "2.1.1+st.7",
+      "platform": "x86_64-windows",
+      "selected_by": [
+        {
+          "name": "stlink-server",
+          "version": "2.1.1+st.7"
+        }
+      ]
+    },
+    {
+      "name": "stlink-upgrader",
+      "version": "3.16.8+st.3",
+      "platform": "darwin",
+      "selected_by": [
+        {
+          "name": "stlink-upgrader",
+          "version": "3.16.8+st.3"
+        }
+      ]
+    },
+    {
+      "name": "stlink-upgrader",
+      "version": "3.16.8+st.3",
+      "platform": "x86_64-linux",
+      "selected_by": [
+        {
+          "name": "stlink-upgrader",
+          "version": "3.16.8+st.3"
+        }
+      ]
+    },
+    {
+      "name": "stlink-upgrader",
+      "version": "3.16.8+st.3",
+      "platform": "x86_64-windows",
+      "selected_by": [
+        {
+          "name": "stlink-upgrader",
+          "version": "3.16.8+st.3"
         }
       ]
     }

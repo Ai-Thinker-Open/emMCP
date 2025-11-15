@@ -20,11 +20,9 @@
 #include "main.h"
 #include "cmsis_os.h"
 #include "dma.h"
-#include "log.h"
 #include "spi.h"
 #include "usart.h"
 #include "gpio.h"
-#include "ws2812.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -69,6 +67,7 @@ void MX_FREERTOS_Init(void);
 /* USER CODE BEGIN 0 */
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
   if (huart == &huart2) {
+    log_info("%.*s",Size, rxBuffer);
     uartPortRecvData((char *)rxBuffer, Size);
     
     HAL_UARTEx_ReceiveToIdle_DMA(&huart2, rxBuffer, RX_BUFFER_SIZE);
@@ -104,7 +103,6 @@ void emMCP_EventCallback(emMCP_event_t event, mcp_server_tool_type_t type, void 
             return;
             }
         }
-        
         // 解析心情
         cJSON *emotion = cJSON_GetObjectItem(Text_root, "emotion");
         if (emotion != NULL) {

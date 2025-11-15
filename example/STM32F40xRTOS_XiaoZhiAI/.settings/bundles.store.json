@@ -23,6 +23,18 @@
     {
       "name": "jlink-gdbserver",
       "version": "8.38.0+st.1"
+    },
+    {
+      "name": "gnu-gdb-for-stm32",
+      "version": "13.3.1+st.10"
+    },
+    {
+      "name": "stlink-server",
+      "version": "2.1.1+st.7"
+    },
+    {
+      "name": "stlink-upgrader",
+      "version": "3.16.8+st.3"
     }
   ]
 }

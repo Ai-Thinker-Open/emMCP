@@ -9,6 +9,8 @@
  *
  */
 #include "emMCP.h"
+#include "emMCPLOG.h"
+#include "log.h"
 #include "projdefs.h"
 #include "uartPort.h"
 #include <stddef.h>
@@ -358,11 +360,15 @@ int emMCP_RegistrationTools(void)
     return -1;
   }
   emMCP_dev->tools_str = cJSON_PrintUnformatted(emMCP_dev->tools_root);
+  emMCP_log_debug("%s", emMCP_dev->tools_str);
   char *cmd = emMCP_malloc(strlen(emMCP_dev->tools_str) + 64);
   if (cmd != NULL && emMCP_dev->tools_str != NULL)
   {
     memset(cmd, 0, strlen(emMCP_dev->tools_str) + 64);
-    sprintf(cmd, "mcp-tool {\"role\":\"MCU\",\"msgType\":\"MCP\",\"MCP\":%s}\r\n", emMCP_dev->tools_str);
+    sprintf(cmd,
+            "mcp-tool {\"role\":\"MCU\",\"msgType\":\"MCP\",\"MCP\":%s}\r\n",
+            emMCP_dev->tools_str);
+    
     uartPortSendData(cmd, strlen(cmd));
   }
   emMCP_free(cmd);

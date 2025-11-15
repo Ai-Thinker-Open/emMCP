@@ -33,8 +33,15 @@ int uartPortSendData(char *data, int len)
     {
         return -1;
     }
-
-    return HAL_UART_Transmit(&huart2, (uint8_t*)data, len, 100); // 返回发送状态
+    uint32_t sent = 0;
+    while (sent < len) {
+        uint32_t remain = len - sent;
+        uint32_t send_len = remain > 256 ? 256 : remain; // 每次最多发256字节
+        HAL_UART_Transmit(&huart2, (uint8_t*)(data+sent), send_len, 100); // 返回发送状态
+        // HAL_UART_Transmit(huart, (uint8_t*)(str + sent), send_len, 100);
+        sent += send_len;
+    }
+    return 0;
 }
 /**
  * @brief 串口接收函数接口,把这个函数在串口接收中断或接收循环中调用

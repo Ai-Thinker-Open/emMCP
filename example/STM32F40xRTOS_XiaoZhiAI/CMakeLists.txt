@@ -30,7 +30,10 @@ message("Build type: " ${CMAKE_BUILD_TYPE})
 
 # Enable CMake support for ASM and C languages
 enable_language(C ASM)
-
+# Add custom commands
+set(CMAKE_C_LINK_FLAS "${CMAKE_C_LINK_FLAGS} -u _printf_float")
+# Enable math library
+set(CMAKE_C_LINK_FLAGS "${CMAKE_C_LINK_FLAS} -lm")
 # Create an executable object type
 add_executable(${CMAKE_PROJECT_NAME})
 
@@ -76,6 +79,5 @@ list(REMOVE_ITEM CMAKE_C_IMPLICIT_LINK_LIBRARIES ob)
 # Add linked libraries
 target_link_libraries(${CMAKE_PROJECT_NAME}
     stm32cubemx
-
     # Add user defined libraries
 )
