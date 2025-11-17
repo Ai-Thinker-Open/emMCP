@@ -62,12 +62,12 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define OLED_DC_Pin GPIO_PIN_0
+#define OLED_DC_GPIO_Port GPIOA
+#define OLED_CS2_Pin GPIO_PIN_1
+#define OLED_CS2_GPIO_Port GPIOA
 #define OLED_CS1_Pin GPIO_PIN_4
 #define OLED_CS1_GPIO_Port GPIOA
-#define OLED_CS2_Pin GPIO_PIN_0
-#define OLED_CS2_GPIO_Port GPIOB
-#define OLED_DC_Pin GPIO_PIN_1
-#define OLED_DC_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 
