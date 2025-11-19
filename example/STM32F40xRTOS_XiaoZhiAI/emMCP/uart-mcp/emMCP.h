@@ -17,7 +17,6 @@
 #include <stdbool.h>
 #include <string.h>
 
-
 #define emMCP_VERSION "1.0.0" // emMCP版本号
 
 #define MCP_SERVER_TOOL_NUMBLE_MAX 3             // 工具数量
@@ -55,6 +54,8 @@ typedef enum {
   emMCP_EVENT_AI_NETCFG,
   emMCP_EVENT_AI_NETERR,
   emMCP_EVENT_AI_WIFI_CONNNECT,
+  emMCP_EVENT_AI_WIFI_CONNECTED,
+  emMCP_EVENT_AI_WIFI_GOT_IP,
   emMCP_EVENT_AI_WIFI_DISCONNECT,
   emMCP_EVENT_AI_WAKE,
   emMCP_EVENT_AI_SLEEP,
@@ -122,6 +123,14 @@ typedef struct {
   bool isUartRecv;
   void (*emMCPEventCallback)(emMCP_event_t, mcp_server_tool_type_t, void *);
 } emMCP_t;
+
+typedef struct {
+  const char *str;     // 字符串常量（Flash存储）
+  uint8_t len;         // 字符串长度（提前计算，避免运行时strlen）
+  emMCP_event_t event; // 对应事件
+  bool is_prefix;      // 是否为前缀匹配（仅用于"ERROR"）
+} status_map_entry_t;
+
 /**
  * @brief emMCP 串口数据缓存
  *
