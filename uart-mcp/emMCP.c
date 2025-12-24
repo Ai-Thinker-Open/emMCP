@@ -65,11 +65,7 @@ static const status_map_entry_t status_map[] = {
  *
  */
 char *uart_data_buf = NULL;
-/**
- * @brief emMCP 串口数据参数缓存区
- *
- */
-static char *uart_data_paramp = NULL;
+
 /**
  * @brief emMCP 工具注册标志
  *
@@ -88,7 +84,7 @@ static uint8_t emMCP_AiVolume = 0;
 /**
  * @brief 函数声明区
  */
-static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type);
+static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type, char *text_param);
 /**
  * @brief 事件回调函数
  *
@@ -420,7 +416,7 @@ int emMCP_RegistrationTools(void)
   {
     memset(cmd, 0, strlen(emMCP_dev->tools_str) + 64);
     sprintf(cmd,
-            "mcp-tool {\"role\":\"MCU\",\"msgType\":\"MCP\",\"MCP\":%s}\r\n",
+            "mcp-tool {\"role\":\"MCU\",\"msgType\":\"MCP\",\"data\":%s}\r\n",
             emMCP_dev->tools_str);
     uartPortSendData(cmd, strlen(cmd));
   }
@@ -439,7 +435,7 @@ int emMCP_RegistrationTools(void)
  * @param param_type
  * @return emMCP_event_t
  */
-static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type)
+static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type, char *text_param)
 {
   // 检查串口数据是否为0
 
@@ -543,11 +539,11 @@ static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type)
   {
 
     if (*param_type == MCP_SERVER_TOOL_TYPE_STRING)
-      strcpy(uart_data_paramp, msgType_param->valuestring);
+      strcpy(text_param, msgType_param->valuestring);
     else
     {
       char *param_str = cJSON_PrintUnformatted(msgType_param);
-      strcpy(uart_data_paramp, param_str);
+      strcpy(text_param, param_str);
       cJSON_free(param_str);
     }
   }
@@ -580,9 +576,9 @@ void emMCP_TickHandle(int delay_ms)
   if (emMCP_dev->isUartRecv)
   {
     mcp_server_tool_type_t _param_type = MCP_SERVER_TOOL_TYPE_STRING;
-    uart_data_paramp = emMCP_malloc(256);
+    char *uart_data_paramp = emMCP_malloc(256);
     memset(uart_data_paramp, 0, 256);
-    emMCP_ReturnEvent(&_param_type);
+    emMCP_ReturnEvent(&_param_type, uart_data_paramp);
     emMCP_dev->emMCPEventCallback(emMCP_event, _param_type, uart_data_paramp);
     emMCP_dev->isUartRecv = 0;
     emMCP_event = emMCP_EVENT_NONE;
