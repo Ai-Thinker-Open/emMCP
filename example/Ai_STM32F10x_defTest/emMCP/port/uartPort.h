@@ -14,11 +14,9 @@
 
 #include "emMCP.h"
 #include "stdbool.h"
-
 #include "FreeRTOS.h"
 #include "cmsis_os.h"
 #include "log.h"
-
 /**
  * @brief 定义串口打印函数
  *
@@ -30,6 +28,7 @@
  */
 #define emMCP_malloc pvPortMalloc
 #define emMCP_free vPortFree
+
 #ifndef emMCP_malloc
 #error "emMCP_malloc is not defined"
 #endif

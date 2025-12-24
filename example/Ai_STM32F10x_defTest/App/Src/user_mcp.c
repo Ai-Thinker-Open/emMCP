@@ -10,6 +10,7 @@
  */
 #include "user_mcp.h"
 #include "log.h"
+#include "stm32f1xx_hal_dma.h"
 #include "usart.h"
 
 char rxBuffer[MCP_BUFFER_SIZE] = {0};
@@ -44,11 +45,12 @@ static void setLEDRequestHandler(void *arguments) {
 
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
   if (huart->Instance == USART2) {
-    HAL_UARTEx_ReceiveToIdle_DMA(huart, (uint8_t *)rxBuffer, sizeof(rxBuffer));
+    HAL_UARTEx_ReceiveToIdle_DMA(huart, (uint8_t *)rxBuffer, MCP_BUFFER_SIZE);
     uartPortRecvData((char *)rxBuffer, Size);
-    __HAL_DMA_ENABLE_IT(huart->hdmarx, DMA_IT_TC);
+    __HAL_DMA_ENABLE_IT(huart->hdmarx, DMA_IT_HT);
   }
 }
+
 void emMCP_EventCallback(emMCP_event_t event, mcp_server_tool_type_t type,
                          void *param) {
   switch (event) {
@@ -94,10 +96,11 @@ void emMCP_EventCallback(emMCP_event_t event, mcp_server_tool_type_t type,
 }
 void user_mcp_init(void) {
 
-  HAL_UARTEx_ReceiveToIdle_DMA(&huart2, (uint8_t *)rxBuffer, sizeof(rxBuffer));
-  __HAL_DMA_ENABLE_IT(huart2.hdmarx, DMA_IT_TC);
+  HAL_UARTEx_ReceiveToIdle_DMA(&huart2, (uint8_t *)rxBuffer, MCP_BUFFER_SIZE);
+  __HAL_DMA_ENABLE_IT(huart2.hdmarx, DMA_IT_HT);
 
   emMCP_Init(&emMCP_dev);
+
   led_tool.name = "Self.LED.switch";
   led_tool.description = "LED switch tool";
   led_tool.inputSchema.properties[0].name = "enable";

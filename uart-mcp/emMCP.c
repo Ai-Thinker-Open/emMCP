@@ -467,7 +467,7 @@ static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type)
   if (msgType != NULL && strcmp(msgType->valuestring, "status") == 0)
   {
     *param_type = MCP_SERVER_TOOL_TYPE_STRING;
-    msgType_param = cJSON_GetObjectItemCaseSensitive(root, "status");
+    msgType_param = cJSON_GetObjectItemCaseSensitive(root, "data");
     if (msgType_param != NULL)
     {
       const char *__restrict status_str = msgType_param->valuestring;
@@ -508,7 +508,7 @@ static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type)
   {
     emMCP_event = emMCP_EVENT_AI_MCP_CMD;
     *param_type = MCP_SERVER_TOOL_TYPE_OBJECT;
-    msgType_param = cJSON_GetObjectItemCaseSensitive(root, "MCP");
+    msgType_param = cJSON_GetObjectItemCaseSensitive(root, "data");
     if (msgType_param == NULL || msgType_param->type != cJSON_Object)
     {
       cJSON_Delete(root);
@@ -532,7 +532,7 @@ static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type)
   {
     emMCP_event = emMCP_EVENT_AI_MCP_Text;
     *param_type = MCP_SERVER_TOOL_TYPE_TEXT;
-    msgType_param = cJSON_GetObjectItemCaseSensitive(root, "MCP Text");
+    msgType_param = cJSON_GetObjectItemCaseSensitive(root, "data");
     if (msgType_param == NULL || msgType_param->type != cJSON_Object)
     {
       cJSON_Delete(root);
@@ -603,7 +603,7 @@ int emMCP_SetBaudrate(uint16_t baudrate)
   memset(cmd, 0, sizeof(cmd));
   sprintf(cmd,
           "baudrate-set "
-          "{\"role\":\"MCU\",\"msgType\":\"status\",\"status\":%d}\r\n",
+          "{\"role\":\"MCU\",\"msgType\":\"status\",\"data\":%d}\r\n",
           baudrate);
   // snprintf(cmd, 128, "baudrate-set
   // {\"role\":\"MCU\",\"msgType\":\"status\",\"status\":%d}\r\n", baudrate);
@@ -632,7 +632,7 @@ int emMCP_SetAiWakeUp(uint8_t WakeUp_Time)
   memset(cmd, 0, sizeof(cmd));
   sprintf(
       cmd,
-      "wake-up {\"role\":\"MCU\",\"msgType\":\"wake-up\",\"wake-up\":%d}\r\n",
+      "wake-up {\"role\":\"MCU\",\"msgType\":\"wake-up\",\"data\":%d}\r\n",
       WakeUp_Time);
   // snprintf(cmd, 128, "wake-up
   // {\"role\":\"MCU\",\"msgType\":\"wake-up\",\"wake-up\":%d}\r\n",
@@ -663,7 +663,7 @@ int emMCP_SetAiVolume(uint8_t volume)
   memset(cmd, 0, sizeof(cmd));
   sprintf(cmd,
           "volume-set "
-          "{\"role\":\"MCU\",\"msgType\":\"status\",\"status\":%d}\r\n",
+          "{\"role\":\"MCU\",\"msgType\":\"status\",\"data\":%d}\r\n",
           volume);
   int ret = uartPortSendData(cmd, strlen(cmd));
   if (ret > 0)
@@ -684,7 +684,7 @@ uint8_t emMCP_CheckAiVolume(void)
 {
   char cmd[128] = {0};
   memset(cmd, 0, sizeof(cmd));
-  sprintf(cmd, "volume-check {\"role\":\"MCU\",\"msgType\":\"status\"}\r\n");
+  sprintf(cmd, "volume-check {\"role\":\"MCU\",\"msgType\":\"data\"}\r\n");
   int ret = uartPortSendData(cmd, strlen(cmd));
   if (ret > 0)
   {
@@ -721,14 +721,14 @@ int emMCP_ResponseValue(char *value)
   {
     sprintf(cmd,
             "mcp-responsive "
-            "{\"role\":\"MCU\",\"msgType\":\"status\",\"status\":\"%s\"}\r\n",
+            "{\"role\":\"MCU\",\"msgType\":\"status\",\"data\":\"%s\"}\r\n",
             value);
   }
   else
   {
     sprintf(cmd,
             "mcp-responsive "
-            "{\"role\":\"MCU\",\"msgType\":\"status\",\"status\":%s}\r\n",
+            "{\"role\":\"MCU\",\"msgType\":\"status\",\"data\":%s}\r\n",
             value);
   }
   if (value_type != NULL)
