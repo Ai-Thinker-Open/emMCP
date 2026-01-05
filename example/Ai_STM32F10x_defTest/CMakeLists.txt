@@ -30,7 +30,6 @@ message("Build type: " ${CMAKE_BUILD_TYPE})
 
 # Enable CMake support for ASM and C languages
 enable_language(C ASM)
-
 # Create an executable object type
 add_executable(${CMAKE_PROJECT_NAME})
 
@@ -41,7 +40,7 @@ add_subdirectory(cmake/stm32cubemx)
 target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined library search paths
 )
-file(GLOB SRC_FILES "App/Src/*.c" "emMCP/port/*.c" "emMCP/uart-mcp/*.c" "emMCP/uart-mcp/cJSON/*.c")
+file(GLOB SRC_FILES "App/Src/*.c" "App/ws2812/*.c" "App/SHT3x/*.c" "emMCP/port/*.c" "emMCP/uart-mcp/*.c" "emMCP/uart-mcp/cJSON/*.c")
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
@@ -53,6 +52,8 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
     App/Inc
+    App/SHT3x
+    App/ws2812
     emMCP/port/
     emMCP/uart-mcp/
     emMCP/uart-mcp/cJSON/

@@ -19,7 +19,7 @@
  * @brief 定义串口打印函数
  *
  */
-#define emMCP_printf
+#define emMCP_printf 
 /**
  * @brief 定义内存操作函数
  *

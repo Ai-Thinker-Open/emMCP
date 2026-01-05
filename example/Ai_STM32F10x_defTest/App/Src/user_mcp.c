@@ -11,9 +11,13 @@
 #include "user_mcp.h"
 #include "log.h"
 #include "stm32f1xx_hal_dma.h"
+#include "stm32f1xx_hal_uart.h"
 #include "usart.h"
 
 char rxBuffer[MCP_BUFFER_SIZE] = {0};
+
+extern DMA_HandleTypeDef hdma_usart2_rx;
+
 static emMCP_t emMCP_dev;
 
 emMCP_tool_t led_tool;
@@ -45,9 +49,14 @@ static void setLEDRequestHandler(void *arguments) {
 
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
   if (huart->Instance == USART2) {
-    HAL_UARTEx_ReceiveToIdle_DMA(huart, (uint8_t *)rxBuffer, MCP_BUFFER_SIZE);
+    // HAL_UARTEx_ReceiveToIdle_DMA(&huart2, (uint8_t *)rxBuffer,
+    // MCP_BUFFER_SIZE);
+
+    log_debug("%s", rxBuffer);
+
     uartPortRecvData((char *)rxBuffer, Size);
-    __HAL_DMA_ENABLE_IT(huart->hdmarx, DMA_IT_HT);
+    // __HAL_DMA_ENABLE_IT(&hdma_usart2_rx, DMA_IT_HT);
+    HAL_UART_Receive_IT(&huart2, (uint8_t *)rxBuffer, MCP_BUFFER_SIZE);
   }
 }
 
@@ -96,9 +105,10 @@ void emMCP_EventCallback(emMCP_event_t event, mcp_server_tool_type_t type,
 }
 void user_mcp_init(void) {
 
-  HAL_UARTEx_ReceiveToIdle_DMA(&huart2, (uint8_t *)rxBuffer, MCP_BUFFER_SIZE);
-  __HAL_DMA_ENABLE_IT(huart2.hdmarx, DMA_IT_HT);
-
+  // HAL_UARTEx_ReceiveToIdle_DMA(&huart2, (uint8_t *)rxBuffer,
+  // MCP_BUFFER_SIZE);
+  // __HAL_DMA_ENABLE_IT(&hdma_usart2_rx, DMA_IT_HT);
+  HAL_UART_Receive_IT(&huart2, (uint8_t *)rxBuffer, MCP_BUFFER_SIZE);
   emMCP_Init(&emMCP_dev);
 
   led_tool.name = "Self.LED.switch";

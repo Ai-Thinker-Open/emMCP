@@ -56,7 +56,10 @@ void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(OLED_CS1_GPIO_Port, OLED_CS1_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, OLED_CS2_Pin|Relay_Pin_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOB, OLED_CS2_Pin|Relay_Pin_Pin|GPIO_PIN_6, GPIO_PIN_SET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_7, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : OLED_DC_Pin */
   GPIO_InitStruct.Pin = OLED_DC_Pin;
@@ -84,6 +87,13 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(Rd_03L_V2_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PB6 PB7 */
+  GPIO_InitStruct.Pin = GPIO_PIN_6|GPIO_PIN_7;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pin : IR_STUDE_Pin */
   GPIO_InitStruct.Pin = IR_STUDE_Pin;

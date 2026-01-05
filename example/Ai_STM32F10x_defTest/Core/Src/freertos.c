@@ -19,16 +19,17 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "FreeRTOS.h"
-#include "cmsis_os.h"
-#include "main.h"
 #include "task.h"
-
+#include "main.h"
+#include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "bsp_sht30.h"
 #include "emMCP.h"
 #include "gpio.h"
 #include "log.h"
+#include <stdint.h>
 
 /* USER CODE END Includes */
 
@@ -54,9 +55,9 @@
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
-    .name = "defaultTask",
-    .stack_size = 256 * 4,
-    .priority = (osPriority_t)osPriorityNormal,
+  .name = "defaultTask",
+  .stack_size = 256 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -67,8 +68,17 @@ const osThreadAttr_t emMCPTask_attributes = {
     .stack_size = 256 * 4,
     .priority = (osPriority_t)osPriorityNormal,
 };
-
 void emMCPDefaultTask(void *argument);
+
+osThreadId_t sHT3xTaskHandle;
+const osThreadAttr_t sHT3xTask_attributes = {
+    .name = "sHT3xTask",
+    .stack_size = 256 * 4,
+    .priority = (osPriority_t)osPriorityNormal,
+};
+
+void sHT3xDefaultTask(void *argument);
+
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void *argument);
@@ -76,10 +86,10 @@ void StartDefaultTask(void *argument);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /**
- * @brief  FreeRTOS initialization
- * @param  None
- * @retval None
- */
+  * @brief  FreeRTOS initialization
+  * @param  None
+  * @retval None
+  */
 void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
 
@@ -103,17 +113,18 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the thread(s) */
   /* creation of defaultTask */
-  defaultTaskHandle =
-      osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   emMCPTaskHandle = osThreadNew(emMCPDefaultTask, NULL, &emMCPTask_attributes);
+  sHT3xTaskHandle = osThreadNew(sHT3xDefaultTask, NULL, &sHT3xTask_attributes);
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
   /* add events, ... */
   /* USER CODE END RTOS_EVENTS */
+
 }
 
 /* USER CODE BEGIN Header_StartDefaultTask */
@@ -123,10 +134,10 @@ void MX_FREERTOS_Init(void) {
  * @retval None
  */
 /* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void *argument) {
+void StartDefaultTask(void *argument)
+{
   /* USER CODE BEGIN StartDefaultTask */
   /* Infinite loop */
-
   for (;;) {
     // 读取按键
     if (HAL_GPIO_ReadPin(IR_STUDE_GPIO_Port, IR_STUDE_Pin) == GPIO_PIN_RESET ||
@@ -141,6 +152,7 @@ void StartDefaultTask(void *argument) {
       while (HAL_GPIO_ReadPin(IR_STUDE_GPIO_Port, IR_STUDE_Pin) ==
                  GPIO_PIN_RESET ||
              HAL_GPIO_ReadPin(Rd_03L_V2_GPIO_Port, Rd_03L_V2_Pin)) {
+
         osDelay(10);
       }
     }
@@ -157,10 +169,24 @@ void emMCPDefaultTask(void *argument) {
   /* USER CODE BEGIN StartDefaultTask */
   /* Infinite loop */
   log_info("emMCP Start");
+
   for (;;) {
 
     emMCP_TickHandle(10);
   }
-  /* USER CODE END StartDefaultTask */
+}
+
+void sHT3xDefaultTask(void *argument) {
+  /* USER CODE BEGIN StartDefaultTask */
+  /* Infinite loop */
+  SHT30_GPIO_Init();
+  log_info("SHT3x Start");
+  for (;;) {
+    // 每隔1秒读取一次温湿度数据
+    SHT30_Read(0x2c06);
+    log_info("Temperature: %d ℃, humidity: %d %%", Temperature, Humidity);
+    osDelay(1000);
+  }
 }
 /* USER CODE END Application */
+
