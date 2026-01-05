@@ -9,6 +9,7 @@
  *
  */
 #include "emMCP.h"
+#include "log.h"
 #include "uartPort.h"
 #include <stddef.h>
 #include <stdio.h>
@@ -30,23 +31,41 @@ emMCP_event_t emMCP_event = emMCP_EVENT_NONE;
  * @brief emMCP JSON类型字符串
  *
  */
-static char *mcp_sever_type_str[MCP_SERVER_TOOL_TYPE_MAX] = {"true", "false", "null", "number", "string", "array", "object", "text", "boolean"};
+static char *mcp_sever_type_str[MCP_SERVER_TOOL_TYPE_MAX] = {
+    "true", "false", "null", "number", "string",
+    "array", "object", "text", "boolean"};
 /**
  * @brief emMCP 日志等级
  *
  */
 emMCP_LogLevel log_level = emMCP_LOG_LEVEL_DEBUG;
-
+/**
+ * @brief emMCP 串口数据缓存区大小
+ *
+ */
+static const status_map_entry_t status_map[] = {
+    // 高频场景优先放在前面，减少比较次数
+    {"OK", 2, emMCP_EVENT_CMD_OK, false},
+    {"ERROR", 5, emMCP_EVENT_CMD_ERROR, true}, // 前缀匹配
+    {"AI Start", 8, emMCP_EVENT_AI_START, false},
+    {"WIFI_CONNECTED", 12, emMCP_EVENT_AI_WIFI_CONNECTED, false},
+    {"WIFI_GOT_IP", 11, emMCP_EVENT_AI_WIFI_GOT_IP, false},
+    {"1.WiFi connect OK", 16, emMCP_EVENT_AI_WIFI_CONNNECT, false},
+    {"2.WakeUP", 8, emMCP_EVENT_AI_WAKE, false},
+    {"3.Sleep", 6, emMCP_EVENT_AI_SLEEP, false},
+    {"4.NetCFG", 7, emMCP_EVENT_AI_NETCFG, false},
+    {"5.NetERR", 7, emMCP_EVENT_AI_NETERR, false},
+    {"6.OTAUPDATE", 10, emMCP_EVENT_AI_OTAUPDATE, false},
+    {"7.OTA OK", 7, emMCP_EVENT_AI_OTAOK, false},
+    {"8.OTA ERR", 8, emMCP_EVENT_AI_OTAERR, false},
+    {NULL, 0, emMCP_EVENT_NONE, false} // 结束标记
+};
 /**
  * @brief emMCP 串口数据缓存区
  *
  */
 char *uart_data_buf = NULL;
-/**
- * @brief emMCP 串口数据参数缓存区
- *
- */
-static char *uart_data_paramp = NULL;
+
 /**
  * @brief emMCP 工具注册标志
  *
@@ -65,7 +84,7 @@ static uint8_t emMCP_AiVolume = 0;
 /**
  * @brief 函数声明区
  */
-static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type);
+static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type, char *text_param);
 /**
  * @brief 事件回调函数
  *
@@ -73,13 +92,16 @@ static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type);
  * @param param
  * @return __emMCPWeak
  */
-__emMCPWeak void emMCP_EventCallback(emMCP_event_t event, mcp_server_tool_type_t type, void *param)
+__emMCPWeak void emMCP_EventCallback(emMCP_event_t event,
+                                     mcp_server_tool_type_t type, void *param)
 {
   char *param_str = (char *)param;
-  emMCP_log_debug("emMCP_EventCallback: event:%d,type:%d,param:%s", event, type, param_str);
+  emMCP_log_debug("emMCP_EventCallback: event:%d,type:%d,param:%s", event, type,
+                  param_str);
 }
 /**
- * @brief emMCP 设置回调函数提醒，如果你没有设置回调函数，该工具的检查函数都会调用这个函数
+ * @brief emMCP
+ * 设置回调函数提醒，如果你没有设置回调函数，该工具的检查函数都会调用这个函数
  *
  * @param arg
  * @return __emMCPWeak
@@ -90,7 +112,8 @@ static void emMCP_Set_CMDCallback(void *arg)
   emMCP_ResponseValue(emMCP_CTRL_ERROR);
 }
 /**
- * @brief emMCP 检查回调函数提醒，如果你没有设置回调函数，该工具的检查函数都会调用这个函数
+ * @brief emMCP
+ * 检查回调函数提醒，如果你没有设置回调函数，该工具的检查函数都会调用这个函数
  *
  * @param arg
  */
@@ -121,7 +144,8 @@ int emMCP_Init(emMCP_t *emMCP)
   {
     emMCP_dev->tools_root = cJSON_CreateObject();
     emMCP_dev->tools_arry = cJSON_CreateArray();
-    cJSON_AddItemToObject(emMCP_dev->tools_root, "tools", emMCP_dev->tools_arry);
+    cJSON_AddItemToObject(emMCP_dev->tools_root, "tools",
+                          emMCP_dev->tools_arry);
   }
   // 初始化回调函数
   emMCP_dev->emMCPEventCallback = emMCP_EventCallback;
@@ -211,14 +235,23 @@ int emMCP_AddToolToToolList(emMCP_tool_t *tool)
   uint8_t properties_cnt = 0;
   if (sizeof(tmp_tool->inputSchema.properties) / sizeof(properties_t) > 0)
   {
-    for (properties_cnt = 0; properties_cnt < MCP_SERVER_TOOL_PROPERTIES_NUM; properties_cnt++)
+    for (properties_cnt = 0; properties_cnt < MCP_SERVER_TOOL_PROPERTIES_NUM;
+         properties_cnt++)
     {
-      if (tmp_tool->inputSchema.properties[properties_cnt].name != NULL) // 判断是否为空
+      if (tmp_tool->inputSchema.properties[properties_cnt].name !=
+          NULL) // 判断是否为空
       {
         cJSON *prop = cJSON_CreateObject();
-        cJSON_AddStringToObject(prop, DESCRIOTION, tmp_tool->inputSchema.properties[properties_cnt].description);
-        cJSON_AddStringToObject(prop, "type", mcp_sever_type_str[tmp_tool->inputSchema.properties[properties_cnt].type]);
-        cJSON_AddItemToObject(properties, tmp_tool->inputSchema.properties[properties_cnt].name, prop);
+        cJSON_AddStringToObject(
+            prop, DESCRIOTION,
+            tmp_tool->inputSchema.properties[properties_cnt].description);
+        cJSON_AddStringToObject(
+            prop, "type",
+            mcp_sever_type_str[tmp_tool->inputSchema.properties[properties_cnt]
+                                   .type]);
+        cJSON_AddItemToObject(
+            properties, tmp_tool->inputSchema.properties[properties_cnt].name,
+            prop);
       }
       else
       {
@@ -235,26 +268,41 @@ int emMCP_AddToolToToolList(emMCP_tool_t *tool)
   uint8_t methods_num = 0;
   if (sizeof(tmp_tool->inputSchema.methods) / sizeof(methods_t) > 0)
   {
-    for (methods_num = 0; methods_num < MCP_SERVER_TOOL_METHODS_NUM; methods_num++)
+    for (methods_num = 0; methods_num < MCP_SERVER_TOOL_METHODS_NUM;
+         methods_num++)
     {
-      if (tmp_tool->inputSchema.methods[methods_num].name != NULL) // 判断是否为空
+      if (tmp_tool->inputSchema.methods[methods_num].name !=
+          NULL) // 判断是否为空
       {
         cJSON *method = cJSON_CreateObject();
-        cJSON_AddItemToObject(methods, tmp_tool->inputSchema.methods[methods_num].name, method);
-        cJSON_AddStringToObject(method, DESCRIOTION, tmp_tool->inputSchema.methods[methods_num].description);
+        cJSON_AddItemToObject(
+            methods, tmp_tool->inputSchema.methods[methods_num].name, method);
+        cJSON_AddStringToObject(
+            method, DESCRIOTION,
+            tmp_tool->inputSchema.methods[methods_num].description);
         // 添加parameters参数
-        if (sizeof(tmp_tool->inputSchema.methods[methods_num].parameters) / sizeof(parameters_t) > 0)
+        if (sizeof(tmp_tool->inputSchema.methods[methods_num].parameters) /
+                sizeof(parameters_t) >
+            0)
         {
           cJSON *parameters = cJSON_CreateObject();
           cJSON_AddItemToObject(method, "parameters", parameters);
           for (size_t i = 0; i < MCP_SERVER_TOOL_METHODS_PARAMETERS_NUM; i++)
           {
-            if (tmp_tool->inputSchema.methods[i].parameters[i].name != NULL) // 判断是否为空
+            if (tmp_tool->inputSchema.methods[i].parameters[i].name !=
+                NULL) // 判断是否为空
             {
               cJSON *param = cJSON_CreateObject();
-              cJSON_AddItemToObject(parameters, tmp_tool->inputSchema.methods[i].parameters[i].name, param);
-              cJSON_AddStringToObject(param, DESCRIOTION, tmp_tool->inputSchema.methods[i].parameters[i].description);
-              cJSON_AddStringToObject(param, "type", mcp_sever_type_str[tmp_tool->inputSchema.methods[i].parameters[i].type]);
+              cJSON_AddItemToObject(
+                  parameters,
+                  tmp_tool->inputSchema.methods[i].parameters[i].name, param);
+              cJSON_AddStringToObject(
+                  param, DESCRIOTION,
+                  tmp_tool->inputSchema.methods[i].parameters[i].description);
+              cJSON_AddStringToObject(
+                  param, "type",
+                  mcp_sever_type_str
+                      [tmp_tool->inputSchema.methods[i].parameters[i].type]);
             }
           }
         }
@@ -289,9 +337,11 @@ static void emMCP_ResponsiveToolRequest(char *tool_name, cJSON *arguments)
   }
   // 开始定位工具
   uint8_t tools_numble = 0;
-  for (tools_numble = 0; tools_numble < MCP_SERVER_TOOL_NUMBLE_MAX; tools_numble++)
+  for (tools_numble = 0; tools_numble < MCP_SERVER_TOOL_NUMBLE_MAX;
+       tools_numble++)
   {
-    if (mcp_tool_arry[tools_numble].name != NULL && strcmp(mcp_tool_arry[tools_numble].name, tool_name) == 0)
+    if (mcp_tool_arry[tools_numble].name != NULL &&
+        strcmp(mcp_tool_arry[tools_numble].name, tool_name) == 0)
     {
       break;
     }
@@ -308,9 +358,12 @@ static void emMCP_ResponsiveToolRequest(char *tool_name, cJSON *arguments)
     //  判断是否为 methods 参数
     if (cJSON_GetObjectItem(arguments, METHODS) != NULL)
     {
-      mcp_tool_arry[tools_numble].setRequestHandler(cJSON_GetObjectItem(arguments, METHODS));
+      mcp_tool_arry[tools_numble].setRequestHandler(
+          cJSON_GetObjectItem(arguments, METHODS));
     }
-    else if (arguments->type == cJSON_Object || (arguments->child == NULL && arguments->child->type != cJSON_NULL))
+    else if ((arguments->type == cJSON_Object && arguments->child == NULL) ||
+             (arguments->type == cJSON_Object && arguments->child != NULL &&
+              arguments->child->type != cJSON_NULL))
     {
       mcp_tool_arry[tools_numble].setRequestHandler(arguments);
     }
@@ -336,7 +389,6 @@ cJSON *emMCP_GetParam(cJSON *params, char *param_name)
   }
   return cJSON_GetObjectItemCaseSensitive(params, param_name);
 }
-
 /**
  * @brief 检查UART数据是否发送成功
  *
@@ -352,7 +404,8 @@ int emMCP_CheckUartSendStatus(void)
  */
 int emMCP_RegistrationTools(void)
 {
-  if (emMCP_dev->tools_root == NULL || emMCP_dev == NULL || emMCP_dev->tools_arry == NULL)
+  if (emMCP_dev->tools_root == NULL || emMCP_dev == NULL ||
+      emMCP_dev->tools_arry == NULL)
   {
     emMCP_log_error("tools_root is NULL");
     return -1;
@@ -362,7 +415,9 @@ int emMCP_RegistrationTools(void)
   if (cmd != NULL && emMCP_dev->tools_str != NULL)
   {
     memset(cmd, 0, strlen(emMCP_dev->tools_str) + 64);
-    sprintf(cmd, "mcp-tool {\"role\":\"MCU\",\"msgType\":\"MCP\",\"MCP\":%s}\r\n", emMCP_dev->tools_str);
+    sprintf(cmd,
+            "mcp-tool {\"role\":\"MCU\",\"msgType\":\"MCP\",\"data\":%s}\r\n",
+            emMCP_dev->tools_str);
     uartPortSendData(cmd, strlen(cmd));
   }
   emMCP_free(cmd);
@@ -373,12 +428,14 @@ int emMCP_RegistrationTools(void)
   emMCP_dev->isUartRecv = false;
   return 0;
 }
+
 /**
- * @brief
+ * @brief 根据串口数据，返回事件类型
  *
+ * @param param_type
  * @return emMCP_event_t
  */
-static inline emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type)
+static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type, char *text_param)
 {
   // 检查串口数据是否为0
 
@@ -406,57 +463,40 @@ static inline emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type
   if (msgType != NULL && strcmp(msgType->valuestring, "status") == 0)
   {
     *param_type = MCP_SERVER_TOOL_TYPE_STRING;
-    msgType_param = cJSON_GetObjectItemCaseSensitive(root, "status");
+    msgType_param = cJSON_GetObjectItemCaseSensitive(root, "data");
     if (msgType_param != NULL)
     {
-      if (strcmp(msgType_param->valuestring, "OK") == 0)
+      const char *__restrict status_str = msgType_param->valuestring;
+      emMCP_event = emMCP_EVENT_NONE;
+      const uint8_t input_len = strlen(status_str);
+      for (uint8_t i = 0; status_map[i].str != NULL; i++)
+      {
+        const status_map_entry_t *entry = &status_map[i];
+        if (!entry->is_prefix && input_len < entry->len)
+        {
+          continue;
+        }
+        if (entry->is_prefix)
+        {
+          if (strncmp(status_str, entry->str, entry->len) == 0)
+          {
+            emMCP_event = entry->event;
+            break;
+          }
+        }
+        else if (strncmp(status_str, entry->str, entry->len) == 0)
+        {
+          emMCP_event = entry->event;
+          break;
+        }
+      }
+      if (emMCP_event == emMCP_EVENT_CMD_OK)
       {
         cJSON *status_parm = cJSON_GetObjectItemCaseSensitive(root, "volume");
-        if (status_parm != NULL && status_parm->type == cJSON_Number)
+        if (status_parm != NULL && cJSON_IsNumber(status_parm))
         {
           emMCP_AiVolume = status_parm->valueint;
         }
-        emMCP_event = emMCP_EVENT_CMD_OK;
-      }
-      else if (strncmp(msgType_param->valuestring, "ERROR", 5) == 0)
-      {
-        emMCP_event = emMCP_EVENT_CMD_ERROR;
-      }
-      else if (strcmp(msgType_param->valuestring, "AI Start") == 0)
-      {
-        emMCP_event = emMCP_EVENT_AI_START;
-      }
-      else if (strcmp(msgType_param->valuestring, "1.WiFi connect OK") == 0)
-      {
-        emMCP_event = emMCP_EVENT_AI_WIFI_CONNNECT;
-      }
-      else if (strcmp(msgType_param->valuestring, "2.WakeUP") == 0)
-      {
-        emMCP_event = emMCP_EVENT_AI_WAKE;
-      }
-      else if (strcmp(msgType_param->valuestring, "3.Sleep") == 0)
-      {
-        emMCP_event = emMCP_EVENT_AI_SLEEP;
-      }
-      else if (strcmp(msgType_param->valuestring, "4.NetCFG") == 0)
-      {
-        emMCP_event = emMCP_EVENT_AI_NETCFG;
-      }
-      else if (strcmp(msgType_param->valuestring, "5.NetERR") == 0)
-      {
-        emMCP_event = emMCP_EVENT_AI_NETERR;
-      }
-      else if (strcmp(msgType_param->valuestring, "6.OTAUPDATE") == 0)
-      {
-        emMCP_event = emMCP_EVENT_AI_OTAUPDATE;
-      }
-      else if (strcmp(msgType_param->valuestring, "7.OTA OK") == 0)
-      {
-        emMCP_event = emMCP_EVENT_AI_OTAOK;
-      }
-      else if (strcmp(msgType_param->valuestring, "8.OTA ERR") == 0)
-      {
-        emMCP_event = emMCP_EVENT_AI_OTAERR;
       }
     }
   }
@@ -464,7 +504,7 @@ static inline emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type
   {
     emMCP_event = emMCP_EVENT_AI_MCP_CMD;
     *param_type = MCP_SERVER_TOOL_TYPE_OBJECT;
-    msgType_param = cJSON_GetObjectItemCaseSensitive(root, "MCP");
+    msgType_param = cJSON_GetObjectItemCaseSensitive(root, "data");
     if (msgType_param == NULL || msgType_param->type != cJSON_Object)
     {
       cJSON_Delete(root);
@@ -476,7 +516,8 @@ static inline emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type
     {
       cJSON *mcp_tool_name = cJSON_GetObjectItemCaseSensitive(param, "name");
       cJSON *arguments = cJSON_GetObjectItemCaseSensitive(param, "arguments");
-      if (arguments != NULL && arguments->type == cJSON_Object && mcp_tool_name != NULL)
+      if (arguments != NULL && arguments->type == cJSON_Object &&
+          mcp_tool_name != NULL)
       {
         // 处理MCP工具
         emMCP_ResponsiveToolRequest(mcp_tool_name->valuestring, arguments);
@@ -487,7 +528,7 @@ static inline emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type
   {
     emMCP_event = emMCP_EVENT_AI_MCP_Text;
     *param_type = MCP_SERVER_TOOL_TYPE_TEXT;
-    msgType_param = cJSON_GetObjectItemCaseSensitive(root, "MCP Text");
+    msgType_param = cJSON_GetObjectItemCaseSensitive(root, "data");
     if (msgType_param == NULL || msgType_param->type != cJSON_Object)
     {
       cJSON_Delete(root);
@@ -496,34 +537,34 @@ static inline emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type
   }
   if (emMCP_event != emMCP_EVENT_NONE)
   {
+
     if (*param_type == MCP_SERVER_TOOL_TYPE_STRING)
-      strcpy(uart_data_paramp, msgType_param->valuestring);
+      strcpy(text_param, msgType_param->valuestring);
     else
     {
       char *param_str = cJSON_PrintUnformatted(msgType_param);
-      strcpy(uart_data_paramp, param_str);
+      strcpy(text_param, param_str);
       cJSON_free(param_str);
     }
   }
   cJSON_Delete(root);
   return emMCP_event;
 }
+
 /**
  * @brief emMCP 更新串口接收状态
  *
  * @param isRecv
  */
-void emMCP_UpdateUartRecv(bool isRecv)
-{
-  emMCP_dev->isUartRecv = isRecv;
-}
+void emMCP_UpdateUartRecv(bool isRecv) { emMCP_dev->isUartRecv = isRecv; }
 /**
  * @brief emMCP 循环
  *
  */
 void emMCP_TickHandle(int delay_ms)
 {
-  if (emMCP_dev == NULL || emMCP_dev->tools_arry == NULL || emMCP_dev->emMCPEventCallback == NULL)
+  if (emMCP_dev == NULL || emMCP_dev->tools_arry == NULL ||
+      emMCP_dev->emMCPEventCallback == NULL)
   {
     emMCP_log_error("emMCP Partial parameter is NULL");
     return;
@@ -535,9 +576,9 @@ void emMCP_TickHandle(int delay_ms)
   if (emMCP_dev->isUartRecv)
   {
     mcp_server_tool_type_t _param_type = MCP_SERVER_TOOL_TYPE_STRING;
-    uart_data_paramp = emMCP_malloc(256);
+    char *uart_data_paramp = emMCP_malloc(256);
     memset(uart_data_paramp, 0, 256);
-    emMCP_ReturnEvent(&_param_type);
+    emMCP_ReturnEvent(&_param_type, uart_data_paramp);
     emMCP_dev->emMCPEventCallback(emMCP_event, _param_type, uart_data_paramp);
     emMCP_dev->isUartRecv = 0;
     emMCP_event = emMCP_EVENT_NONE;
@@ -556,8 +597,12 @@ int emMCP_SetBaudrate(uint16_t baudrate)
   }
   char cmd[128] = {0};
   memset(cmd, 0, sizeof(cmd));
-  sprintf(cmd, "baudrate-set {\"role\":\"MCU\",\"msgType\":\"status\",\"status\":%d}\r\n", baudrate);
-  // snprintf(cmd, 128, "baudrate-set {\"role\":\"MCU\",\"msgType\":\"status\",\"status\":%d}\r\n", baudrate);
+  sprintf(cmd,
+          "baudrate-set "
+          "{\"role\":\"MCU\",\"msgType\":\"status\",\"data\":%d}\r\n",
+          baudrate);
+  // snprintf(cmd, 128, "baudrate-set
+  // {\"role\":\"MCU\",\"msgType\":\"status\",\"status\":%d}\r\n", baudrate);
   uartPortSendData(cmd, strlen(cmd));
   // 等待AI设备返回结果
   int timerout = 0;
@@ -581,8 +626,13 @@ int emMCP_SetAiWakeUp(uint8_t WakeUp_Time)
 {
   char cmd[128] = {0};
   memset(cmd, 0, sizeof(cmd));
-  sprintf(cmd, "wake-up {\"role\":\"MCU\",\"msgType\":\"wake-up\",\"wake-up\":%d}\r\n", WakeUp_Time);
-  // snprintf(cmd, 128, "wake-up {\"role\":\"MCU\",\"msgType\":\"wake-up\",\"wake-up\":%d}\r\n", WakeUp_Time);
+  sprintf(
+      cmd,
+      "wake-up {\"role\":\"MCU\",\"msgType\":\"wake-up\",\"data\":%d}\r\n",
+      WakeUp_Time);
+  // snprintf(cmd, 128, "wake-up
+  // {\"role\":\"MCU\",\"msgType\":\"wake-up\",\"wake-up\":%d}\r\n",
+  // WakeUp_Time);
   int ret = uartPortSendData(cmd, strlen(cmd));
   if (ret > 0)
   {
@@ -607,7 +657,10 @@ int emMCP_SetAiVolume(uint8_t volume)
   }
   char cmd[128] = {0};
   memset(cmd, 0, sizeof(cmd));
-  sprintf(cmd, "volume-set {\"role\":\"MCU\",\"msgType\":\"status\",\"status\":%d}\r\n", volume);
+  sprintf(cmd,
+          "volume-set "
+          "{\"role\":\"MCU\",\"msgType\":\"status\",\"data\":%d}\r\n",
+          volume);
   int ret = uartPortSendData(cmd, strlen(cmd));
   if (ret > 0)
   {
@@ -627,7 +680,7 @@ uint8_t emMCP_CheckAiVolume(void)
 {
   char cmd[128] = {0};
   memset(cmd, 0, sizeof(cmd));
-  sprintf(cmd, "volume-check {\"role\":\"MCU\",\"msgType\":\"status\"}\r\n");
+  sprintf(cmd, "volume-check {\"role\":\"MCU\",\"msgType\":\"data\"}\r\n");
   int ret = uartPortSendData(cmd, strlen(cmd));
   if (ret > 0)
   {
@@ -662,11 +715,17 @@ int emMCP_ResponseValue(char *value)
   cJSON *value_type = cJSON_Parse(value);
   if (value_type == NULL)
   {
-    sprintf(cmd, "mcp-responsive {\"role\":\"MCU\",\"msgType\":\"status\",\"status\":\"%s\"}\r\n", value);
+    sprintf(cmd,
+            "mcp-responsive "
+            "{\"role\":\"MCU\",\"msgType\":\"status\",\"data\":\"%s\"}\r\n",
+            value);
   }
   else
   {
-    sprintf(cmd, "mcp-responsive {\"role\":\"MCU\",\"msgType\":\"status\",\"status\":%s}\r\n", value);
+    sprintf(cmd,
+            "mcp-responsive "
+            "{\"role\":\"MCU\",\"msgType\":\"status\",\"data\":%s}\r\n",
+            value);
   }
   if (value_type != NULL)
     cJSON_free(value_type);

@@ -65,11 +65,7 @@ static const status_map_entry_t status_map[] = {
  *
  */
 char *uart_data_buf = NULL;
-/**
- * @brief emMCP 串口数据参数缓存区
- *
- */
-static char *uart_data_paramp = NULL;
+
 /**
  * @brief emMCP 工具注册标志
  *
@@ -88,7 +84,7 @@ static uint8_t emMCP_AiVolume = 0;
 /**
  * @brief 函数声明区
  */
-static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type);
+static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type, char *text_param);
 /**
  * @brief 事件回调函数
  *
@@ -148,7 +144,8 @@ int emMCP_Init(emMCP_t *emMCP)
   {
     emMCP_dev->tools_root = cJSON_CreateObject();
     emMCP_dev->tools_arry = cJSON_CreateArray();
-    cJSON_AddItemToObject(emMCP_dev->tools_root, "tools", emMCP_dev->tools_arry);
+    cJSON_AddItemToObject(emMCP_dev->tools_root, "tools",
+                          emMCP_dev->tools_arry);
   }
   // 初始化回调函数
   emMCP_dev->emMCPEventCallback = emMCP_EventCallback;
@@ -419,7 +416,7 @@ int emMCP_RegistrationTools(void)
   {
     memset(cmd, 0, strlen(emMCP_dev->tools_str) + 64);
     sprintf(cmd,
-            "mcp-tool {\"role\":\"MCU\",\"msgType\":\"MCP\",\"MCP\":%s}\r\n",
+            "mcp-tool {\"role\":\"MCU\",\"msgType\":\"MCP\",\"data\":%s}\r\n",
             emMCP_dev->tools_str);
     uartPortSendData(cmd, strlen(cmd));
   }
@@ -438,7 +435,7 @@ int emMCP_RegistrationTools(void)
  * @param param_type
  * @return emMCP_event_t
  */
-static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type)
+static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type, char *text_param)
 {
   // 检查串口数据是否为0
 
@@ -466,26 +463,19 @@ static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type)
   if (msgType != NULL && strcmp(msgType->valuestring, "status") == 0)
   {
     *param_type = MCP_SERVER_TOOL_TYPE_STRING;
-    msgType_param = cJSON_GetObjectItemCaseSensitive(root, "status");
+    msgType_param = cJSON_GetObjectItemCaseSensitive(root, "data");
     if (msgType_param != NULL)
     {
       const char *__restrict status_str = msgType_param->valuestring;
       emMCP_event = emMCP_EVENT_NONE;
-      log_info("staus value= %s", status_str);
-      // 提前计算输入字符串长度（仅计算一次）
       const uint8_t input_len = strlen(status_str);
-
-      // 遍历映射表（利用数组索引，无哈希表开销）
       for (uint8_t i = 0; status_map[i].str != NULL; i++)
       {
         const status_map_entry_t *entry = &status_map[i];
-
-        // 长度预判：若输入长度小于匹配长度（且非前缀匹配），直接跳过
         if (!entry->is_prefix && input_len < entry->len)
         {
           continue;
         }
-        // 前缀匹配（仅"ERROR"）
         if (entry->is_prefix)
         {
           if (strncmp(status_str, entry->str, entry->len) == 0)
@@ -494,16 +484,12 @@ static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type)
             break;
           }
         }
-        // 精确匹配（先比较长度，再比较内容，减少字符串比较开销）
         else if (strncmp(status_str, entry->str, entry->len) == 0)
         {
           emMCP_event = entry->event;
-
           break;
         }
       }
-      log_info("event value= %d", emMCP_event);
-      // 处理"OK"的额外逻辑（解析volume）
       if (emMCP_event == emMCP_EVENT_CMD_OK)
       {
         cJSON *status_parm = cJSON_GetObjectItemCaseSensitive(root, "volume");
@@ -518,7 +504,7 @@ static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type)
   {
     emMCP_event = emMCP_EVENT_AI_MCP_CMD;
     *param_type = MCP_SERVER_TOOL_TYPE_OBJECT;
-    msgType_param = cJSON_GetObjectItemCaseSensitive(root, "MCP");
+    msgType_param = cJSON_GetObjectItemCaseSensitive(root, "data");
     if (msgType_param == NULL || msgType_param->type != cJSON_Object)
     {
       cJSON_Delete(root);
@@ -542,7 +528,7 @@ static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type)
   {
     emMCP_event = emMCP_EVENT_AI_MCP_Text;
     *param_type = MCP_SERVER_TOOL_TYPE_TEXT;
-    msgType_param = cJSON_GetObjectItemCaseSensitive(root, "MCP Text");
+    msgType_param = cJSON_GetObjectItemCaseSensitive(root, "data");
     if (msgType_param == NULL || msgType_param->type != cJSON_Object)
     {
       cJSON_Delete(root);
@@ -553,11 +539,11 @@ static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type)
   {
 
     if (*param_type == MCP_SERVER_TOOL_TYPE_STRING)
-      strcpy(uart_data_paramp, msgType_param->valuestring);
+      strcpy(text_param, msgType_param->valuestring);
     else
     {
       char *param_str = cJSON_PrintUnformatted(msgType_param);
-      strcpy(uart_data_paramp, param_str);
+      strcpy(text_param, param_str);
       cJSON_free(param_str);
     }
   }
@@ -590,9 +576,9 @@ void emMCP_TickHandle(int delay_ms)
   if (emMCP_dev->isUartRecv)
   {
     mcp_server_tool_type_t _param_type = MCP_SERVER_TOOL_TYPE_STRING;
-    uart_data_paramp = emMCP_malloc(256);
+    char *uart_data_paramp = emMCP_malloc(256);
     memset(uart_data_paramp, 0, 256);
-    emMCP_ReturnEvent(&_param_type);
+    emMCP_ReturnEvent(&_param_type, uart_data_paramp);
     emMCP_dev->emMCPEventCallback(emMCP_event, _param_type, uart_data_paramp);
     emMCP_dev->isUartRecv = 0;
     emMCP_event = emMCP_EVENT_NONE;
@@ -613,7 +599,7 @@ int emMCP_SetBaudrate(uint16_t baudrate)
   memset(cmd, 0, sizeof(cmd));
   sprintf(cmd,
           "baudrate-set "
-          "{\"role\":\"MCU\",\"msgType\":\"status\",\"status\":%d}\r\n",
+          "{\"role\":\"MCU\",\"msgType\":\"status\",\"data\":%d}\r\n",
           baudrate);
   // snprintf(cmd, 128, "baudrate-set
   // {\"role\":\"MCU\",\"msgType\":\"status\",\"status\":%d}\r\n", baudrate);
@@ -642,7 +628,7 @@ int emMCP_SetAiWakeUp(uint8_t WakeUp_Time)
   memset(cmd, 0, sizeof(cmd));
   sprintf(
       cmd,
-      "wake-up {\"role\":\"MCU\",\"msgType\":\"wake-up\",\"wake-up\":%d}\r\n",
+      "wake-up {\"role\":\"MCU\",\"msgType\":\"wake-up\",\"data\":%d}\r\n",
       WakeUp_Time);
   // snprintf(cmd, 128, "wake-up
   // {\"role\":\"MCU\",\"msgType\":\"wake-up\",\"wake-up\":%d}\r\n",
@@ -673,7 +659,7 @@ int emMCP_SetAiVolume(uint8_t volume)
   memset(cmd, 0, sizeof(cmd));
   sprintf(cmd,
           "volume-set "
-          "{\"role\":\"MCU\",\"msgType\":\"status\",\"status\":%d}\r\n",
+          "{\"role\":\"MCU\",\"msgType\":\"status\",\"data\":%d}\r\n",
           volume);
   int ret = uartPortSendData(cmd, strlen(cmd));
   if (ret > 0)
@@ -694,7 +680,7 @@ uint8_t emMCP_CheckAiVolume(void)
 {
   char cmd[128] = {0};
   memset(cmd, 0, sizeof(cmd));
-  sprintf(cmd, "volume-check {\"role\":\"MCU\",\"msgType\":\"status\"}\r\n");
+  sprintf(cmd, "volume-check {\"role\":\"MCU\",\"msgType\":\"data\"}\r\n");
   int ret = uartPortSendData(cmd, strlen(cmd));
   if (ret > 0)
   {
@@ -731,14 +717,14 @@ int emMCP_ResponseValue(char *value)
   {
     sprintf(cmd,
             "mcp-responsive "
-            "{\"role\":\"MCU\",\"msgType\":\"status\",\"status\":\"%s\"}\r\n",
+            "{\"role\":\"MCU\",\"msgType\":\"status\",\"data\":\"%s\"}\r\n",
             value);
   }
   else
   {
     sprintf(cmd,
             "mcp-responsive "
-            "{\"role\":\"MCU\",\"msgType\":\"status\",\"status\":%s}\r\n",
+            "{\"role\":\"MCU\",\"msgType\":\"status\",\"data\":%s}\r\n",
             value);
   }
   if (value_type != NULL)
