@@ -18,20 +18,15 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "cJSON.h"
 #include "dma.h"
-#include "emMCP.h"
 #include "gpio.h"
-#include "stm32f103xb.h"
-#include "stm32f1xx_hal.h"
-#include "stm32f1xx_hal_dma.h"
-#include "stm32f1xx_hal_gpio.h"
-#include "stm32f1xx_hal_uart.h"
 #include "usart.h"
-#include <stdint.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "cJSON.h"
+#include "emMCP.h"
+#include "stdio.h"
 
 /* USER CODE END Includes */
 
@@ -64,7 +59,7 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
   if (huart == &huart2) {
     uartPortRecvData((char *)rxBuffer, Size);
     HAL_UARTEx_ReceiveToIdle_DMA(&huart2, rxBuffer, UART_RXBUFF_MAX);
-    __HAL_DMA_DISABLE_IT(&hdma_usart2_rx, DMA_IT_HT);
+    __HAL_DMA_DISABLE_IT(huart2.hdmarx, DMA_IT_HT);
   }
 }
 
@@ -75,20 +70,21 @@ static void emMCP_SetLEDHandler(void *arg) {
   cJSON *enable = cJSON_GetObjectItem(param, "enable");
   if (enable != NULL) {
     if (enable->valueint == 1) {
-      HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_RESET);
+      HAL_GPIO_WritePin(RELA_GPIO_Port, RELA_Pin, GPIO_PIN_RESET);
     } else if (enable->valueint == 0) {
-      HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET);
+      HAL_GPIO_WritePin(RELA_GPIO_Port, RELA_Pin, GPIO_PIN_SET);
     }
     emMCP_ResponseValue(emMCP_CTRL_OK);
+
   } else {
     emMCP_ResponseValue(emMCP_CTRL_ERROR);
   }
 }
-
 static void emMCP_GetLEDHandler(void *arg) {}
 /* USER CODE END PFP */
 
-/* Private user code ---------------------------------------------------------*/
+/* Private user code
+ * ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 emMCP_tool_t led;
 /* USER CODE END 0 */
@@ -103,9 +99,11 @@ int main(void) {
 
   /* USER CODE END 1 */
 
-  /* MCU Configuration--------------------------------------------------------*/
+  /* MCU
+   * Configuration--------------------------------------------------------*/
 
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick.
+  /* Reset of all peripherals, Initializes the Flash interface and the
+   * Systick.
    */
   HAL_Init();
 
@@ -128,15 +126,15 @@ int main(void) {
   /* USER CODE BEGIN 2 */
   // 启用串口接收中断
   HAL_UARTEx_ReceiveToIdle_DMA(&huart2, rxBuffer, UART_RXBUFF_MAX);
-  __HAL_DMA_DISABLE_IT(&hdma_usart2_rx, DMA_IT_HT);
+  __HAL_DMA_DISABLE_IT(huart2.hdmarx, DMA_IT_HT);
 
   // 初始化MCP
   emMCP_Init(&emMCP);
-  led.name = "LED灯";
-  led.description = "用来控制LED灯的亮灭";
+  led.name = "继电器";
+  led.description = "用来控制继电器的开关";
   led.inputSchema.properties[0].name = "enable";
   led.inputSchema.properties[0].description =
-      "控制LED灯,打开:true,关闭为:false,查询为null";
+      "控制继电器,打开:true,关闭为:false,查询为null";
   led.inputSchema.properties[0].type = MCP_SERVER_TOOL_TYPE_BOOLEAN;
   led.setRequestHandler = emMCP_SetLEDHandler;
   led.checkRequestHandler = emMCP_GetLEDHandler;
@@ -148,9 +146,9 @@ int main(void) {
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1) {
+
     /* USER CODE END WHILE */
-    // 执行状态机
-    emMCP_TickHandle(100);
+    emMCP_TickHandle(10);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -167,12 +165,13 @@ void SystemClock_Config(void) {
   /** Initializes the RCC Oscillators according to the specified parameters
    * in the RCC_OscInitTypeDef structure.
    */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI_DIV2;
-  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL16;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL9;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
     Error_Handler();
   }
@@ -183,8 +182,8 @@ void SystemClock_Config(void) {
                                 RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV4;
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK) {
     Error_Handler();
@@ -201,7 +200,8 @@ void SystemClock_Config(void) {
  */
 void Error_Handler(void) {
   /* USER CODE BEGIN Error_Handler_Debug */
-  /* User can add his own implementation to report the HAL error return state */
+  /* User can add his own implementation to report the HAL error return state
+   */
   __disable_irq();
   while (1) {
   }
@@ -218,8 +218,8 @@ void Error_Handler(void) {
 void assert_failed(uint8_t *file, uint32_t line) {
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line
-     number, ex: printf("Wrong parameters value: file %s on line %d\r\n", file,
-     line) */
+     number, ex: printf("Wrong parameters value: file %s on line %d\r\n",
+     file, line) */
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */

@@ -13,7 +13,6 @@
 #include "uartPort.h"
 #include <stddef.h>
 #include <stdio.h>
-#include <sys/_intsup.h>
 
 #define DESCRIOTION "description"
 #define METHODS "methods"
@@ -66,10 +65,6 @@ static const status_map_entry_t status_map[] = {
  *
  */
 char *uart_data_buf = NULL;
-/**
- * @brief emMCP 串口数据参数缓存区
- *
- */
 
 /**
  * @brief emMCP 工具注册标志
@@ -90,7 +85,7 @@ static uint8_t emMCP_AiVolume = 0;
  * @brief 函数声明区
  */
 static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type,
-                                       char *uart_data_paramp);
+                                       char *text_param);
 /**
  * @brief 事件回调函数
  *
@@ -374,7 +369,7 @@ int emMCP_RegistrationTools(void) {
   if (cmd != NULL && emMCP_dev->tools_str != NULL) {
     memset(cmd, 0, strlen(emMCP_dev->tools_str) + 64);
     sprintf(cmd,
-            "mcp-tool {\"role\":\"MCU\",\"msgType\":\"MCP\",\"MCP\":%s}\r\n",
+            "mcp-tool {\"role\":\"MCU\",\"msgType\":\"MCP\",\"data\":%s}\r\n",
             emMCP_dev->tools_str);
     uartPortSendData(cmd, strlen(cmd));
   }
@@ -394,7 +389,7 @@ int emMCP_RegistrationTools(void) {
  * @return emMCP_event_t
  */
 static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type,
-                                       char *uart_data_paramp) {
+                                       char *text_param) {
   // 检查串口数据是否为0
 
   if (strlen(uart_data_buf) == 0) {
@@ -444,25 +439,33 @@ static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type,
         }
       }
     }
-  } else if (msgType != NULL && strcmp(msgType->valuestring, "MCP") == 0) {
+  } else if (msgType != NULL && strcmp(msgType->valuestring, "mcp_set") == 0) {
     emMCP_event = emMCP_EVENT_AI_MCP_CMD;
     *param_type = MCP_SERVER_TOOL_TYPE_OBJECT;
+    cJSON *mcp_toolsname = cJSON_GetObjectItemCaseSensitive(root, "tools");
+    if (mcp_toolsname == NULL || mcp_toolsname->type != cJSON_String) {
+      cJSON_Delete(root);
+      return emMCP_EVENT_NONE;
+    }
     msgType_param = cJSON_GetObjectItemCaseSensitive(root, "data");
     if (msgType_param == NULL || msgType_param->type != cJSON_Object) {
       cJSON_Delete(root);
       return emMCP_EVENT_NONE;
     }
     // 从MCP 工具中解析出参数
-    cJSON *param = cJSON_GetObjectItemCaseSensitive(msgType_param, "params");
-    if (param != NULL && param->type == cJSON_Object) {
-      cJSON *mcp_tool_name = cJSON_GetObjectItemCaseSensitive(param, "name");
-      cJSON *arguments = cJSON_GetObjectItemCaseSensitive(param, "arguments");
-      if (arguments != NULL && arguments->type == cJSON_Object &&
-          mcp_tool_name != NULL) {
-        // 处理MCP工具
-        emMCP_ResponsiveToolRequest(mcp_tool_name->valuestring, arguments);
-      }
-    }
+    // cJSON *param = cJSON_GetObjectItemCaseSensitive(msgType_param, "params");
+    // if (param != NULL && param->type == cJSON_Object)
+    // {
+    //   cJSON *mcp_tool_name = cJSON_GetObjectItemCaseSensitive(param, "name");
+    //   cJSON *arguments = cJSON_GetObjectItemCaseSensitive(param,
+    //   "arguments"); if (arguments != NULL && arguments->type == cJSON_Object
+    //   &&
+    //       mcp_tool_name != NULL)
+    //   {
+    // 处理MCP工具
+    emMCP_ResponsiveToolRequest(mcp_toolsname->valuestring, msgType_param);
+    //   }
+    // }
   } else if (msgType != NULL && strcmp(msgType->valuestring, "MCP Text") == 0) {
     emMCP_event = emMCP_EVENT_AI_MCP_Text;
     *param_type = MCP_SERVER_TOOL_TYPE_TEXT;
@@ -475,10 +478,10 @@ static emMCP_event_t emMCP_ReturnEvent(mcp_server_tool_type_t *param_type,
   if (emMCP_event != emMCP_EVENT_NONE) {
 
     if (*param_type == MCP_SERVER_TOOL_TYPE_STRING)
-      strcpy(uart_data_paramp, msgType_param->valuestring);
+      strcpy(text_param, msgType_param->valuestring);
     else {
       char *param_str = cJSON_PrintUnformatted(msgType_param);
-      strcpy(uart_data_paramp, param_str);
+      strcpy(text_param, param_str);
       cJSON_free(param_str);
     }
   }
@@ -515,8 +518,6 @@ void emMCP_TickHandle(int delay_ms) {
     emMCP_event = emMCP_EVENT_NONE;
     emMCP_free(uart_data_paramp);
   }
-
-  emMCP_delay(delay_time);
 }
 /**
  * @brief 设置通讯波特率
