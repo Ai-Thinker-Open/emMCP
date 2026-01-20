@@ -10,6 +10,8 @@
  */
 #include "user_mcp.h"
 #include "log.h"
+#include "stm32f103xb.h"
+#include "stm32f1xx_hal_gpio.h"
 #include "usart.h"
 char rxBuffer[MCP_BUFFER_SIZE] = {0};
 static emMCP_t emMCP_dev;
@@ -23,9 +25,10 @@ static void setLEDRequestHandler(void *arguments) {
   // 获取被设置参数值
   cJSON *enabled = emMCP_GetParam(params, "enable");
   if (enabled != NULL) {
-    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1,
-                      enabled->valueint ? GPIO_PIN_RESET : GPIO_PIN_SET);
     int ret = emMCP_ResponseValue(emMCP_CTRL_OK); // 返回控制成功
+    HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5,
+                      enabled->valueint ? GPIO_PIN_SET : GPIO_PIN_RESET);
+
     if (ret != 0) {
       log_error("response error");
     } else {
@@ -97,14 +100,13 @@ void user_mcp_init(void) {
   __HAL_DMA_ENABLE_IT(&hdma_usart2_rx, DMA_IT_TC);
 
   emMCP_Init(&emMCP_dev);
-  led_tool.name = "Self.LED.switch";
-  led_tool.description = "LED switch tool";
+  led_tool.name = "继电器";
+  led_tool.description = "控制继电器开关";
   led_tool.inputSchema.properties[0].name = "enable";
   led_tool.inputSchema.properties[0].description =
-      "LED switch, true:on, false:off, when queried, attribute is null";
+      "继电器开关, true:开, false:关, 当查询时, 属性为null";
   led_tool.inputSchema.properties[0].type = MCP_SERVER_TOOL_TYPE_BOOLEAN;
   led_tool.setRequestHandler = setLEDRequestHandler;
-
 
   int ret = emMCP_AddToolToToolList(&led_tool);
   if (ret != 0) {

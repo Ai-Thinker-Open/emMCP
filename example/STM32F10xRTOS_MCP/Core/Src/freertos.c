@@ -22,6 +22,7 @@
 #include "task.h"
 #include "main.h"
 #include "cmsis_os.h"
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "user_mcp.h"
@@ -49,16 +50,16 @@
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
-    .name = "defaultTask",
-    .stack_size = 128 * 4,
-    .priority = (osPriority_t)osPriorityNormal,
+  .name = "defaultTask",
+  .stack_size = 128 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for emMCP_Handler */
 osThreadId_t emMCP_HandlerHandle;
 const osThreadAttr_t emMCP_Handler_attributes = {
-    .name = "emMCP_Handler",
-    .stack_size = 512 * 4,
-    .priority = (osPriority_t)osPriorityLow1,
+  .name = "emMCP_Handler",
+  .stack_size = 512 * 4,
+  .priority = (osPriority_t) osPriorityLow,
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -72,12 +73,11 @@ void StartTask02(void *argument);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /**
- * @brief  FreeRTOS initialization
- * @param  None
- * @retval None
- */
-void MX_FREERTOS_Init(void)
-{
+  * @brief  FreeRTOS initialization
+  * @param  None
+  * @retval None
+  */
+void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
 
   /* USER CODE END Init */
@@ -112,6 +112,7 @@ void MX_FREERTOS_Init(void)
   /* USER CODE BEGIN RTOS_EVENTS */
   /* add events, ... */
   /* USER CODE END RTOS_EVENTS */
+
 }
 
 /* USER CODE BEGIN Header_StartDefaultTask */
@@ -126,8 +127,7 @@ void StartDefaultTask(void *argument)
   /* USER CODE BEGIN StartDefaultTask */
   /* Infinite loop */
 
-  for (;;)
-  {
+  for (;;) {
 
     osDelay(100);
   }
@@ -146,10 +146,8 @@ void StartTask02(void *argument)
   /* USER CODE BEGIN StartTask02 */
   /* Infinite loop */
   user_mcp_init();
-  for (;;)
-  {
+  for (;;) {
     emMCP_TickHandle(10);
-    osDelay(100);
   }
   /* USER CODE END StartTask02 */
 }
@@ -158,3 +156,4 @@ void StartTask02(void *argument)
 /* USER CODE BEGIN Application */
 
 /* USER CODE END Application */
+
