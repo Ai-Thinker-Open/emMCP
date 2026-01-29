@@ -65,10 +65,7 @@ void bsp_i2c_send_ack(u8 ack) {
   SCL(0);
   SDA(0);
   delay_us(5);
-  if (ack)
-    SDA(0); // 发送ACK
-  else
-    SDA(1); // 发送NACK
+  SDA(ack); // 发送ACK
   SCL(1);
   delay_us(5);
   SCL(0);

@@ -11,7 +11,7 @@
 #ifndef __STM32F10X_BSP_I2C_H__
 #define __STM32F10X_BSP_I2C_H__
 #include "stm32f10x_delay.h"
-
+#include "log.h"
 #define u8 unsigned char
 #define delay_us(x) HAL_Delay_us(x)
 #define delay_ms(x) HAL_Delay(x)

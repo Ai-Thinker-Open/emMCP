@@ -20,10 +20,9 @@
 /* Includes ------------------------------------------------------------------*/
 #include "FreeRTOS.h"
 #include "cmsis_os.h"
-#include "log.h"
 #include "main.h"
-#include "projdefs.h"
 #include "task.h"
+
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -66,7 +65,7 @@ osThreadId_t sht3x_readHandle;
 const osThreadAttr_t sht3x_read_attributes = {
     .name = "sht3x_read",
     .stack_size = 256 * 4,
-    .priority = (osPriority_t)osPriorityLow,
+    .priority = (osPriority_t)osPriorityNormal1,
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -77,9 +76,9 @@ emMCP_t emMCP;
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
   if (huart == &huart2) {
     uartPortRecvData((char *)rxBuffer, Size);
+
     HAL_UARTEx_ReceiveToIdle_DMA(&huart2, rxBuffer, RXBUFFSER_MAX_SIZE);
     __HAL_DMA_DISABLE_IT(huart2.hdmarx, DMA_IT_HT);
-    memset(rxBuffer, 0, RXBUFFSER_MAX_SIZE);
   }
 }
 
@@ -148,7 +147,7 @@ void StartDefaultTask(void *argument) {
   emMCP_Init(&emMCP);
   for (;;) {
     // osDelay(1);
-    emMCP_TickHandle(pdMS_TO_TICKS(10));
+    emMCP_TickHandle(pdMS_TO_TICKS(100));
   }
   /* USER CODE END StartDefaultTask */
 }
@@ -173,9 +172,15 @@ void sht3x_read_task(void *argument) {
   double temperature = 0.0;
   double humidity = 0.0;
   for (;;) {
-    res = axk_sht3x_read(0x2c06, &temperature, &humidity);
-    log_info("sht30: %0.2f C,%0.2f %%", temperature, humidity);
+
     osDelay(pdMS_TO_TICKS(1000));
+    res = axk_sht3x_read(0x2c06, &temperature, &humidity);
+    if (res != 0) {
+      log_error("sht3x read error: %d", res);
+      continue;
+    }
+    log_info("sht30: %0.2d C,%0.2d %%", (uint8_t)temperature,
+             (uint8_t)humidity);
   }
   /* USER CODE END sht3x_read_task */
 }

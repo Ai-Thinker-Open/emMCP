@@ -9,25 +9,8 @@
  *
  */
 #include "axk_sht3x.h"
-#include "stm32f10x_bsp_i2c.h"
 #include <stdint.h>
 #include <stdio.h>
-/**
- * @file axk_sht3x.c
- * @author SeaHi-Mo (Seahi-Mo@Foxmail.com)
- * @brief
- * @version 0.1
- * @date 2026-01-29
- *
- * @copyright Copyright (c) 2026
- *
- */
-#include "axk_sht3x.h"
-#include "stm32f10x_bsp_i2c.h"
-#include <stdint.h>
-#include <stdio.h>
-#include <sys/_intsup.h>
-#include <sys/_types.h>
 /**
  * @brief 初始化SHT3x温湿度传感器
  *
@@ -125,10 +108,10 @@ static unsigned char axk_sht3x_crc(const unsigned char *data,
  */
 unsigned char axk_sht3x_read(unsigned int _mode, double *temp,
                              double *humidity) {
-  if (temp || humidity == NULL)
+  if (temp == NULL || humidity == NULL)
     return 6;
   unsigned int i = 0;
-  unsigned char buff[6] = {0};
+  static unsigned char buff[6] = {0};
   unsigned int data_16 = 0;
 
   AXK_SHT3X_I2C_ACLL(start);
@@ -144,31 +127,32 @@ unsigned char axk_sht3x_read(unsigned int _mode, double *temp,
   if (AXK_SHT3X_I2C_ACLL(wait_ack)) {
     return 3;
   }
+
   do {
     i++;
     if (i > 20)
       return 4;
-    delay_ms(10);
+    AXK_SHT3X_DELAY_MS(10);
 
     AXK_SHT3X_I2C_ACLL(start);
     AXK_SHT3X_I2C_ACLL(send_byte, AXK_SHT3X_ADDRESS << 1 | AXK_SHT3X_READ_CMD);
   } while (AXK_SHT3X_I2C_ACLL(wait_ack));
 
   buff[0] = AXK_SHT3X_I2C_ACLL(read_byte); // 展开为bsp_i2c_read_byte()
-  AXK_SHT3X_I2C_ACLL(send_ack, 0);
+  AXK_SHT3X_I2C_ACLL(send_ack, AXK_SHT3X_ACK);
   buff[1] = AXK_SHT3X_I2C_ACLL(read_byte);
-  AXK_SHT3X_I2C_ACLL(send_ack, 0);
+  AXK_SHT3X_I2C_ACLL(send_ack, AXK_SHT3X_ACK);
   buff[2] = AXK_SHT3X_I2C_ACLL(read_byte);
-  AXK_SHT3X_I2C_ACLL(send_ack, 0);
+  AXK_SHT3X_I2C_ACLL(send_ack, AXK_SHT3X_ACK);
   buff[3] = AXK_SHT3X_I2C_ACLL(read_byte);
-  AXK_SHT3X_I2C_ACLL(send_ack, 0);
+  AXK_SHT3X_I2C_ACLL(send_ack, AXK_SHT3X_ACK);
   buff[4] = AXK_SHT3X_I2C_ACLL(read_byte);
-  AXK_SHT3X_I2C_ACLL(send_ack, 0);
+  AXK_SHT3X_I2C_ACLL(send_ack, AXK_SHT3X_ACK);
   buff[5] = AXK_SHT3X_I2C_ACLL(read_byte);
-  AXK_SHT3X_I2C_ACLL(send_ack, 0);
-
+  AXK_SHT3X_I2C_ACLL(send_ack, AXK_SHT3X_NACK);
+  AXK_SHT3X_I2C_ACLL(stop);
   if (axk_sht3x_crc(buff, 2) == buff[2] &&
-      axk_sht3x_crc(buff + 3, 2) == buff[5]) {
+      (axk_sht3x_crc(buff + 3, 2) == buff[5])) {
     data_16 = (buff[0] << 8) | buff[1];
     *temp = -45 + 175 * ((double)data_16 / 65535.0);
     data_16 = (buff[3] << 8) | buff[4];
