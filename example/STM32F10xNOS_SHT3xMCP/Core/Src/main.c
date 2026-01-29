@@ -154,7 +154,20 @@ int main(void) {
   /* USER CODE BEGIN WHILE */
   while (1) {
     /* USER CODE END WHILE */
-    emMCP_TickHandle(100);
+    char ret = SHT30_Read(0x2c06);
+    if (ret != 0) {
+      log_error("SHT30_Read error %d", ret);
+      HAL_Delay(1000);
+      continue;
+    }
+    char *sht30_str = malloc(64);
+    memset(sht30_str, 0, 64);
+    sprintf(sht30_str, "{\"temperature\":%d,\"humidity\":%d}",
+            (uint8_t)Temperature, (uint8_t)Humidity);
+    log_info("sht30_str=%s", sht30_str);
+    // emMCP_TickHandle(100);
+    HAL_Delay(1000);
+    free(sht30_str);
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
