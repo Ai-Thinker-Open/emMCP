@@ -29,6 +29,7 @@
  * @warning 函数会直接操作I2C总线，确保调用时没有其他设备占用总线
  */
 unsigned char axk_sht3x_init(void) {
+  unsigned char ack;
   AXK_SHT3X_I2C_ACLL(init);  // 调用I2C初始化函数 (展开为bsp_i2c_init())
   AXK_SHT3X_I2C_ACLL(start); // 发送I2C起始信号 (展开为bsp_i2c_start())
 
@@ -37,12 +38,9 @@ unsigned char axk_sht3x_init(void) {
   AXK_SHT3X_I2C_ACLL(send_byte, AXK_SHT3X_ADDRESS << 1 | AXK_SHT3X_WRITE_CMD);
 
   // 等待传感器应答信号
-  if (AXK_SHT3X_I2C_ACLL(wait_ack)) // 展开为bsp_i2c_wait_ack()
-  {
-    return 1; // 无应答，返回失败
-  }
-
-  return 0; // 有应答，初始化成功
+  ack = AXK_SHT3X_I2C_ACLL(wait_ack); // 展开为bsp_i2c_wait_ack()
+  AXK_SHT3X_I2C_ACLL(stop);  // 发送I2C停止信号 (展开为bsp_i2c_stop())
+  return ack;
 }
 /**
  * @brief 设置SHT3x工作模式

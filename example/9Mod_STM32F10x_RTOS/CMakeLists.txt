@@ -41,7 +41,7 @@ add_subdirectory(cmake/stm32cubemx)
 target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined library search paths
 )
-file(GLOB SRC_FILES "Bsp/delay/*.c" "Bsp/i2c/*.c" "components/*.c" "components/log/*.c" "components/SHT3x/*.c" "components/ch224/*.c" "emMCP/port/*.c" "emMCP/uart-mcp/*.c" "emMCP/uart-mcp/cJSON/*.c")
+file(GLOB SRC_FILES "Bsp/delay/*.c" "Bsp/pwm_dma/*.c" "Bsp/i2c/*.c" "components/*.c" "components/log/*.c" "components/SHT3x/*.c" "components/ch224/*.c" "components/relay/*.c" "components/ws2812/*.c" "emMCP/port/*.c" "emMCP/uart-mcp/*.c" "emMCP/uart-mcp/cJSON/*.c")
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
@@ -53,9 +53,12 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
     Bsp/delay
     Bsp/i2c
+    Bsp/pwm_dma
     components/log
     components/SHT3x
     components/ch224
+    components/relay
+    components/ws2812
     emMCP/port
     emMCP/uart-mcp
     emMCP/uart-mcp/cJSON

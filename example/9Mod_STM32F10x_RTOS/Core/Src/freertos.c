@@ -19,13 +19,13 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "FreeRTOS.h"
-#include "cmsis_os.h"
-#include "main.h"
 #include "task.h"
-
+#include "main.h"
+#include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "axk_ch224.h"
 #include "axk_sht3x.h"
 #include "emMCP.h"
 #include "uartPort.h"
@@ -56,23 +56,24 @@
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
-    .name = "defaultTask",
-    .stack_size = 256 * 4,
-    .priority = (osPriority_t)osPriorityNormal,
+  .name = "defaultTask",
+  .stack_size = 256 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for sht3x_read */
 osThreadId_t sht3x_readHandle;
 const osThreadAttr_t sht3x_read_attributes = {
-    .name = "sht3x_read",
-    .stack_size = 256 * 4,
-    .priority = (osPriority_t)osPriorityNormal1,
+  .name = "sht3x_read",
+  .stack_size = 256 * 4,
+  .priority = (osPriority_t) osPriorityNormal1,
 };
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
 uint8_t rxBuffer[RXBUFFSER_MAX_SIZE] = {0};
 emMCP_t emMCP;
-
+bool sht30_is_init = false;
+bool ch224_is_init = false;
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
   if (huart == &huart2) {
     uartPortRecvData((char *)rxBuffer, Size);
@@ -90,10 +91,10 @@ void sht3x_read_task(void *argument);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /**
- * @brief  FreeRTOS initialization
- * @param  None
- * @retval None
- */
+  * @brief  FreeRTOS initialization
+  * @param  None
+  * @retval None
+  */
 void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
 
@@ -117,8 +118,7 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the thread(s) */
   /* creation of defaultTask */
-  defaultTaskHandle =
-      osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* creation of sht3x_read */
   sht3x_readHandle = osThreadNew(sht3x_read_task, NULL, &sht3x_read_attributes);
@@ -130,6 +130,7 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_EVENTS */
   /* add events, ... */
   /* USER CODE END RTOS_EVENTS */
+
 }
 
 /* USER CODE BEGIN Header_StartDefaultTask */
@@ -139,7 +140,8 @@ void MX_FREERTOS_Init(void) {
  * @retval None
  */
 /* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void *argument) {
+void StartDefaultTask(void *argument)
+{
   /* USER CODE BEGIN StartDefaultTask */
   /* Infinite loop */
   HAL_UARTEx_ReceiveToIdle_DMA(&huart2, (uint8_t *)rxBuffer, sizeof(rxBuffer));
@@ -159,21 +161,53 @@ void StartDefaultTask(void *argument) {
  * @retval None
  */
 /* USER CODE END Header_sht3x_read_task */
-void sht3x_read_task(void *argument) {
+void sht3x_read_task(void *argument)
+{
   /* USER CODE BEGIN sht3x_read_task */
   /* Infinite loop */
 
   uint8_t res = axk_sht3x_init();
   if (res != 0) {
     log_error("sht3x not driver");
-    return;
+    sht30_is_init = false;
+  } else {
+    sht30_is_init = true;
+    log_info("sht3x init OK!");
   }
-  log_info("sht3x init OK!");
+
+  res = axk_ch224_init();
+  if (res != 0) {
+    log_error("ch224 not driver");
+    ch224_is_init = false;
+  } else {
+    ch224_is_init = true;
+    log_info("ch224 init OK!");
+  }
+
+  int ch224_status = axk_ch224_get_status(AXK_CH224_REG_STATUS);
+
+  if (ch224_status < 0) {
+    log_error("ch224 status error: %d", ch224_status);
+  } else
+    log_info("ch224 status: 0x%02X", ch224_status);
+
+  // 设置CH224输出电压为5V
+  ch224_status = axk_ch224_set_avs_vout(18.0);
+  if (ch224_status < 0) {
+    log_error("ch224 set vout error: %d", ch224_status);
+  } else {
+    log_info("ch224 set avs vout: 29.5V");
+    axk_ch224_set_mode(AXK_CH224_VOUT_AVS);
+  }
+
   double temperature = 0.0;
   double humidity = 0.0;
   for (;;) {
 
     osDelay(pdMS_TO_TICKS(1000));
+    if (!sht30_is_init) {
+      continue;
+    }
     res = axk_sht3x_read(0x2c06, &temperature, &humidity);
     if (res != 0) {
       log_error("sht3x read error: %d", res);
@@ -189,3 +223,4 @@ void sht3x_read_task(void *argument) {
 /* USER CODE BEGIN Application */
 
 /* USER CODE END Application */
+
