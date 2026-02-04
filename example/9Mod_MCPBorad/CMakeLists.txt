@@ -19,7 +19,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 # Set the project name
-set(CMAKE_PROJECT_NAME 9Mod_STM32F10x_RTOS)
+set(CMAKE_PROJECT_NAME 9Mod_MCPBorad)
 
 # Enable compile command to ease indexing with e.g. clangd
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
@@ -41,6 +41,7 @@ add_subdirectory(cmake/stm32cubemx)
 target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined library search paths
 )
+
 file(GLOB SRC_FILES "Bsp/delay/*.c" "Bsp/pwm_dma/*.c" "Bsp/i2c/*.c" "components/*.c" "components/log/*.c" "components/SHT3x/*.c" "components/ch224/*.c" "components/relay/*.c" "components/ws2812/*.c" "emMCP/port/*.c" "emMCP/uart-mcp/*.c" "emMCP/uart-mcp/cJSON/*.c")
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
@@ -67,7 +68,6 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
 # Add project symbols (macros)
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined symbols
-
 )
 
 # Remove wrong libob.a library dependency when using cpp files
@@ -76,5 +76,6 @@ list(REMOVE_ITEM CMAKE_C_IMPLICIT_LINK_LIBRARIES ob)
 # Add linked libraries
 target_link_libraries(${CMAKE_PROJECT_NAME}
     stm32cubemx
+
     # Add user defined libraries
 )

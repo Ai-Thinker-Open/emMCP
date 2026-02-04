@@ -9,6 +9,7 @@
  *
  */
 #include "axk_ch224.h"
+#include "log.h"
 #include <stdint.h>
 #include <sys/_intsup.h>
 #include <sys/_types.h>
@@ -153,7 +154,7 @@ int axk_ch224_set_mode(axk_ch224_vout_t _mode) {
     AXK_CH224_I2C_ACLL(stop); // 发送停止信号
     return -1;                // 设备无响应
   }
-  // 8. 配置电压寄存器为PPS模式
+  // 8. 配置电压寄存器
   AXK_CH224_I2C_ACLL(send_byte, AXK_CH224_REG_VOUT);
   // 9. 等待设备ACK
   if (AXK_CH224_I2C_ACLL(wait_ack)) {
@@ -179,7 +180,7 @@ int axk_ch224_set_mode(axk_ch224_vout_t _mode) {
  */
 int axk_ch224_set_pps_vout(float PPS_VOUT) {
   // 5. 检查 value 是否在 5~20V 范围内
-  if (PPS_VOUT < 5 || PPS_VOUT > 20) {
+  if (PPS_VOUT < 5.0 || PPS_VOUT > 28.0) {
     return -10; // 电压值超出范围
   }
   // 1. 发送起始信号
@@ -220,11 +221,11 @@ int axk_ch224_set_avs_vout(float AVS_VOUT) {
   if (AVS_VOUT < 5.0 || AVS_VOUT > 28.0) {
     return -10; // 电压值超出范围
   }
-  unsigned int avs_vout = (unsigned char)(AVS_VOUT * 1000.0) / 100.0;
+  unsigned int avs_vout = (unsigned char)(AVS_VOUT * 10.0);
   unsigned char AVS_LSB = 0X00;
   unsigned char AVS_MSB = 0X00;
-  AVS_LSB = (avs_vout & 0XFF00 >> 8) | 0X80;
-  AVS_MSB = avs_vout & 0X00FF;
+  AVS_MSB = ((avs_vout >> 8) & 0XFF00) | 0X80;
+  AVS_LSB = avs_vout & 0X00FF;
   // 2. 发送起始信号
   AXK_CH224_I2C_ACLL(start);
   // 3. 发送设备地址+写命令 (0x22 << 1 | 0 = 0x44)
@@ -234,6 +235,18 @@ int axk_ch224_set_avs_vout(float AVS_VOUT) {
     AXK_CH224_I2C_ACLL(stop); // 发送停止信号
     return -1;                // 设备无响应
   }
+
+  AXK_CH224_I2C_ACLL(send_byte, AXK_CH224_REG_AVS_LSB);
+
+  if (AXK_CH224_I2C_ACLL(wait_ack)) {
+    AXK_CH224_I2C_ACLL(stop); // 发送停止信号
+    return -3;                // 发送AVS电压值LSB失败
+  }
+  AXK_CH224_I2C_ACLL(send_byte, AVS_LSB);
+  if (AXK_CH224_I2C_ACLL(wait_ack)) {
+    AXK_CH224_I2C_ACLL(stop); // 发送停止信号
+    return -3;                // 发送AVS电压值MSB失败
+  }
   // 5. 发送要写入的AVS电压值
   AXK_CH224_I2C_ACLL(send_byte, AXK_CH224_REG_AVS_MSB);
   // 6. 等待设备ACK
@@ -241,23 +254,8 @@ int axk_ch224_set_avs_vout(float AVS_VOUT) {
     AXK_CH224_I2C_ACLL(stop); // 发送停止信号
     return -2;                // 发送AVS电压值LSB失败
   }
-  // 7. 发送AVS电压值MSB
   AXK_CH224_I2C_ACLL(send_byte, AVS_MSB);
-  // 8. 等待设备ACK
-  if (AXK_CH224_I2C_ACLL(wait_ack)) {
-    AXK_CH224_I2C_ACLL(stop); // 发送停止信号
-    return -3;                // 发送AVS电压值MSB失败
-  }
-  // 9. 发送要写入的AVS电压值 LSB
-  AXK_CH224_I2C_ACLL(send_byte, AXK_CH224_REG_AVS_LSB);
-  // 10. 等待设备ACK
-  if (AXK_CH224_I2C_ACLL(wait_ack)) {
-    AXK_CH224_I2C_ACLL(stop); // 发送停止信号
-    return -3;                // 发送AVS电压值LSB失败
-  }
-  // 11.发送AVS电压值LSB
-  AXK_CH224_I2C_ACLL(send_byte, AVS_LSB);
-  // 12. 等待设备ACK
+
   if (AXK_CH224_I2C_ACLL(wait_ack)) {
     AXK_CH224_I2C_ACLL(stop); // 发送停止信号
     return -4;                // 发送AVS

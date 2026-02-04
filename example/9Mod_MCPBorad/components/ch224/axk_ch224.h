@@ -26,14 +26,17 @@
 #else
 #error "Please include the appropriate I2C header for CH224."
 #endif
-
+// 定义CH224 I2C 地址
 #define AXK_CH224_I2C_ADDR 0x22
+// 定义CH224 I2C 命令
 #define AXK_CH224_WRITE_CMD 0
+// 定义CH224 I2C 读取命令
 #define AXK_CH224_READ_CMD 1
-
+// 定义CH224 I2C ACK
 #define AXK_CH224_ACK 0
+// 定义CH224 I2C NACK
 #define AXK_CH224_NACK 1
-
+// 定义CH224 I2C 寄存器
 typedef enum {
   AXK_CH224_REG_STATUS = 0x09,
   AXK_CH224_REG_VOUT = 0x0A,
@@ -42,7 +45,7 @@ typedef enum {
   AXK_CH224_REG_AVS_LSB,
   AXK_CH224_REG_PPS,
 } axk_ch224_reg_t;
-
+// 定义CH224 I2C 输出电压
 typedef enum {
   AXK_CH224_VOUT_5V = 0x00,
   AXK_CH224_VOUT_9V,
@@ -50,8 +53,8 @@ typedef enum {
   AXK_CH224_VOUT_15V,
   AXK_CH224_VOUT_20V,
   AXK_CH224_VOUT_28V,
-  AXK_CH224_VOUT_PPS,
-  AXK_CH224_VOUT_AVS,
+  AXK_CH224_VOUT_PPS, // 输出电压为PPS模式
+  AXK_CH224_VOUT_AVS, // 输出电压为AVS模式
 } axk_ch224_vout_t;
 
 int axk_ch224_init(void);
