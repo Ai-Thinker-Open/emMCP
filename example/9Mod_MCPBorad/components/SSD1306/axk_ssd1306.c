@@ -11,15 +11,26 @@
 #include "axk_ssd1306.h"
 
 void axk_ssd1306_init(void) {}
-
+/**
+ * @brief Write a byte to SSD1306
+ *
+ * @param data
+ * @param cmd
+ */
 void axk_ssd1306_write_byte(unsigned char data, unsigned char cmd) {
   if (cmd) {
 #ifdef AXK_SSD1306_SPI
+
     AXK_SSD1306_ACLL(dc_set);
+#elif AXK_SSD1306_I2C
+// I2C 驱动代码
 #endif
+
   } else {
 #ifdef AXK_SSD1306_SPI
     AXK_SSD1306_ACLL(dc_reset);
+#elif AXK_SSD1306_I2C
+// I2C 驱动代码
 #endif
   }
 #ifdef AXK_SSD1306_SPI
@@ -29,5 +40,7 @@ void axk_ssd1306_write_byte(unsigned char data, unsigned char cmd) {
   AXK_SSD1306_ACLL(transmit, data, 100);
   AXK_SSD1306_ACLL(cs_set);
   AXK_SSD1306_ACLL(dc_set);
+#elif AXK_SSD1306_I2C
+// I2C 驱动代码
 #endif
 }
