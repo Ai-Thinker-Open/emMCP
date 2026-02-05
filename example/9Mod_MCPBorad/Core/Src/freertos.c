@@ -19,9 +19,9 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "FreeRTOS.h"
-#include "cmsis_os.h"
-#include "main.h"
 #include "task.h"
+#include "main.h"
+#include "cmsis_os.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -29,6 +29,7 @@
 #include "axk_sht3x.h"
 #include "axk_ws2812.h"
 #include "emMCP.h"
+#include "relay.h"
 #include "uartPort.h"
 #include "usart.h"
 #include <stdint.h>
@@ -57,23 +58,23 @@
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
 const osThreadAttr_t defaultTask_attributes = {
-    .name = "defaultTask",
-    .stack_size = 256 * 4,
-    .priority = (osPriority_t)osPriorityNormal,
+  .name = "defaultTask",
+  .stack_size = 256 * 4,
+  .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for sht3x_read */
 osThreadId_t sht3x_readHandle;
 const osThreadAttr_t sht3x_read_attributes = {
-    .name = "sht3x_read",
-    .stack_size = 256 * 4,
-    .priority = (osPriority_t)osPriorityNormal1,
+  .name = "sht3x_read",
+  .stack_size = 256 * 4,
+  .priority = (osPriority_t) osPriorityNormal1,
 };
 /* Definitions for ws2812_mode */
 osThreadId_t ws2812_modeHandle;
 const osThreadAttr_t ws2812_mode_attributes = {
-    .name = "ws2812_mode",
-    .stack_size = 256 * 4,
-    .priority = (osPriority_t)osPriorityNormal2,
+  .name = "ws2812_mode",
+  .stack_size = 256 * 4,
+  .priority = (osPriority_t) osPriorityNormal2,
 };
 
 /* Private function prototypes -----------------------------------------------*/
@@ -97,10 +98,10 @@ void ws2812_modeTask(void *argument);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /**
- * @brief  FreeRTOS initialization
- * @param  None
- * @retval None
- */
+  * @brief  FreeRTOS initialization
+  * @param  None
+  * @retval None
+  */
 void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
 
@@ -124,15 +125,13 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the thread(s) */
   /* creation of defaultTask */
-  defaultTaskHandle =
-      osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* creation of sht3x_read */
   sht3x_readHandle = osThreadNew(sht3x_read_task, NULL, &sht3x_read_attributes);
 
   /* creation of ws2812_mode */
-  ws2812_modeHandle =
-      osThreadNew(ws2812_modeTask, NULL, &ws2812_mode_attributes);
+  ws2812_modeHandle = osThreadNew(ws2812_modeTask, NULL, &ws2812_mode_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -141,6 +140,7 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_EVENTS */
   /* add events, ... */
   /* USER CODE END RTOS_EVENTS */
+
 }
 
 /* USER CODE BEGIN Header_StartDefaultTask */
@@ -150,7 +150,8 @@ void MX_FREERTOS_Init(void) {
  * @retval None
  */
 /* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void *argument) {
+void StartDefaultTask(void *argument)
+{
   /* USER CODE BEGIN StartDefaultTask */
   /* Infinite loop */
   HAL_UARTEx_ReceiveToIdle_DMA(&huart2, (uint8_t *)rxBuffer, sizeof(rxBuffer));
@@ -170,7 +171,8 @@ void StartDefaultTask(void *argument) {
  * @retval None
  */
 /* USER CODE END Header_sht3x_read_task */
-void sht3x_read_task(void *argument) {
+void sht3x_read_task(void *argument)
+{
   /* USER CODE BEGIN sht3x_read_task */
   /* Infinite loop */
 
@@ -191,7 +193,7 @@ void sht3x_read_task(void *argument) {
     ch224_is_init = true;
     log_info("ch224 init OK!");
   }
-
+  axk_relay_init();
   int ch224_status = axk_ch224_get_status(AXK_CH224_REG_STATUS);
 
   if (ch224_status < 0) {
@@ -219,6 +221,7 @@ void sht3x_read_task(void *argument) {
   for (;;) {
 
     osDelay(pdMS_TO_TICKS(1000));
+    axk_relay_toggle();
     if (!sht30_is_init) {
       continue;
     }
@@ -240,7 +243,8 @@ void sht3x_read_task(void *argument) {
  * @retval None
  */
 /* USER CODE END Header_ws2812_modeTask */
-void ws2812_modeTask(void *argument) {
+void ws2812_modeTask(void *argument)
+{
   /* USER CODE BEGIN ws2812_modeTask */
   /* Infinite loop */
   axk_ws2812_init(&ws2812);
@@ -270,3 +274,4 @@ static void smoothcolorTransition_callbark(color_t color, void *arg) {
 }
 
 /* USER CODE END Application */
+

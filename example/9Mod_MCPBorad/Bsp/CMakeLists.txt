@@ -1,0 +1,20 @@
+cmake_minimum_required(VERSION 3.22)
+
+add_library(bsp INTERFACE)
+
+file(GLOB COMPONENT_SRC_FILES ${CMAKE_CURRENT_SOURCE_DIR}/*.c
+${CMAKE_CURRENT_SOURCE_DIR}/spi/*.c
+${CMAKE_CURRENT_SOURCE_DIR}/delay/*.c
+${CMAKE_CURRENT_SOURCE_DIR}/i2c/*.c
+${CMAKE_CURRENT_SOURCE_DIR}/pwm_dma/*.c
+)
+target_sources(bsp INTERFACE ${COMPONENT_SRC_FILES})
+
+target_include_directories(bsp INTERFACE 
+${CMAKE_CURRENT_SOURCE_DIR}/spi
+${CMAKE_CURRENT_SOURCE_DIR}/delay
+${CMAKE_CURRENT_SOURCE_DIR}/i2c
+${CMAKE_CURRENT_SOURCE_DIR}/pwm_dma
+)
+
+

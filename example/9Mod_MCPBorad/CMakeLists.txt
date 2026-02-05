@@ -36,30 +36,24 @@ add_executable(${CMAKE_PROJECT_NAME})
 
 # Add STM32CubeMX generated sources
 add_subdirectory(cmake/stm32cubemx)
-
+add_subdirectory(components)
+add_subdirectory(Bsp)
 # Link directories setup
 target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined library search paths
 )
 
-file(GLOB SRC_FILES "Bsp/delay/*.c" "Bsp/pwm_dma/*.c" "Bsp/i2c/*.c" "components/*.c" "components/log/*.c" "components/SHT3x/*.c" "components/ch224/*.c" "components/relay/*.c" "components/ws2812/*.c" "emMCP/port/*.c" "emMCP/uart-mcp/*.c" "emMCP/uart-mcp/cJSON/*.c")
+file(GLOB EMMCP_SRC_FILES  "emMCP/port/*.c" "emMCP/uart-mcp/*.c" "emMCP/uart-mcp/cJSON/*.c")
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
-      ${SRC_FILES}
+      ${BSP_SRC_FILES}
+      ${EMMCP_SRC_FILES}
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
-    Bsp/delay
-    Bsp/i2c
-    Bsp/pwm_dma
-    components/log
-    components/SHT3x
-    components/ch224
-    components/relay
-    components/ws2812
     emMCP/port
     emMCP/uart-mcp
     emMCP/uart-mcp/cJSON
@@ -76,6 +70,8 @@ list(REMOVE_ITEM CMAKE_C_IMPLICIT_LINK_LIBRARIES ob)
 # Add linked libraries
 target_link_libraries(${CMAKE_PROJECT_NAME}
     stm32cubemx
-
+    
     # Add user defined libraries
+    components
+    bsp
 )

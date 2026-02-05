@@ -11,4 +11,11 @@
 #ifndef __RELAY_H__
 #define __RELAY_H__
 
-#endif 
+#define ON 1
+#define OFF 0
+
+void axk_relay_init(void);
+void axk_relay_set(unsigned char state);
+unsigned char axk_relay_get(void);
+void axk_relay_toggle(void);
+#endif
