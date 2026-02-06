@@ -165,7 +165,6 @@ void StartDefaultTask(void *argument) {
   }
   /* USER CODE END StartDefaultTask */
 }
-
 /* USER CODE BEGIN Header_sht3x_read_task */
 /**
  * @brief Function implementing the sht3x_read thread.
@@ -236,7 +235,6 @@ void sht3x_read_task(void *argument) {
   }
   /* USER CODE END sht3x_read_task */
 }
-
 /* USER CODE BEGIN Header_ws2812_modeTask */
 /**
  * @brief Function implementing the ws2812_mode thread.
@@ -252,12 +250,9 @@ void ws2812_modeTask(void *argument) {
   axk_ssd1306_set_color_turn(0);
   axk_ssd1306_set_display_turn(0);
   axk_ssd1306_clear_screen();
-  axk_ssd1306_show_str(16, 0, FONT_SIEZE_16, 0, (unsigned char *)"Hello World");
-  axk_ssd1306_show_numble(0, 16, FONT_SIEZE_16, 0, 1234);
-  axk_ssd1306_refresh();
-  delay_ms(2000);
   axk_ssd1306_clear_screen();
-  axk_ssd1306_show_utf8_str(1, 4, "你好，世界！");
+  axk_ssd1306_show_utf8_str(32, 0, "欢迎使用");
+  axk_ssd1306_show_utf8_str(24, 3, "九章开发板");
   axk_ws2812_init(&ws2812);
   for (;;) {
     smoothcolorTransition(RED, BLUE, 500, smoothcolorTransition_callbark, NULL);
