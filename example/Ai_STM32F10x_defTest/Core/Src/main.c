@@ -120,15 +120,15 @@ int main(void) {
   OLED_Clear();
   log_info("OLED clear OK");
   // OLED_Display_8x16(0, 0, "Hello,world!");
-  OLED_Display_UTF8(0, 3, "欢迎使用小安AI开发板");
-  OLED_WR_Byte(0X2E, OLED_CMD);
-  OLED_WR_Byte(0X2A, OLED_CMD);
-  OLED_WR_Byte(0X00, OLED_CMD);
-  OLED_WR_Byte(0X00, OLED_CMD);
-  OLED_WR_Byte(0X07, OLED_CMD);
-  OLED_WR_Byte(0X07, OLED_CMD);
-  OLED_WR_Byte(0X00, OLED_CMD);
-  OLED_WR_Byte(0X2F, OLED_CMD);
+  OLED_Display_UTF8(0, 3, "你好，世界！");
+  // OLED_WR_Byte(0X2E, OLED_CMD);
+  // OLED_WR_Byte(0X2A, OLED_CMD);
+  // OLED_WR_Byte(0X00, OLED_CMD);
+  // OLED_WR_Byte(0X00, OLED_CMD);
+  // OLED_WR_Byte(0X07, OLED_CMD);
+  // OLED_WR_Byte(0X07, OLED_CMD);
+  // OLED_WR_Byte(0X00, OLED_CMD);
+  // OLED_WR_Byte(0X2F, OLED_CMD);
 
   /* USER CODE END 2 */
 

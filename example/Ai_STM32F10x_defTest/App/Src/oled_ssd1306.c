@@ -211,7 +211,6 @@ void OLED_Display_GB2312_string(uint8_t x, uint8_t y, char *text) {
       addrHigh = (fontaddr & 0xff0000) >> 16;
       addrMid = (fontaddr & 0xff00) >> 8;
       addrLow = (fontaddr & 0xff);
-
       OLED_get_data_from_ROM(addrHigh, addrMid, addrLow, fontbuf, 32);
       OLED_Display_16x16(x, y, fontbuf);
       x += 16;
@@ -275,7 +274,7 @@ void OLED_Display_UTF8(uint8_t x, uint8_t y, const char *text) {
       x += 16;
       i += byte_len;
     } else if ((text[i] >= 0x20) && (text[i] <= 0x7e)) {
-      unsigned char fontbuf[16];
+      uint8_t fontbuf[16];
       uint8_t addrHigh, addrMid, addrLow;
       uint32_t fontaddr;
       fontaddr = (text[i] - 0x20);
@@ -400,93 +399,4 @@ void OLED_Init(void) {
   OLED_WR_Byte(0xA6, OLED_CMD); // Disable Inverse Display On (0xa6/a7)
   OLED_Clear();
   OLED_WR_Byte(0xAF, OLED_CMD); /*display ON*/
-}
-
-/**
- * @brief 设置SSD1306滚动
- * @param direction 滚动方向
- * @param start_page 起始页地址(0-7)
- * @param end_page 结束页地址(0-7)
- * @param speed 滚动速度(0-7)
- */
-void OLED_Scroll_Start(oled_scroll_direction_t direction, uint8_t start_page,
-                       uint8_t end_page, uint8_t speed) {
-  // 首先停止任何正在进行的滚动
-  OLED_WR_Byte(0x2E, OLED_CMD);
-
-  // 确保参数有效
-  if (start_page > end_page) {
-    uint8_t temp = start_page;
-    start_page = end_page;
-    end_page = temp;
-  }
-
-  if (start_page > 7)
-    start_page = 7;
-  if (end_page > 7)
-    end_page = 7;
-  if (speed > 7)
-    speed = 7;
-
-  switch (direction) {
-  case OLED_SCROLL_LEFT:
-    // 连续向左水平滚动
-    OLED_WR_Byte(0x27, OLED_CMD);       // 向左滚动命令
-    OLED_WR_Byte(0x00, OLED_CMD);       // 空字节
-    OLED_WR_Byte(start_page, OLED_CMD); // 起始页
-    OLED_WR_Byte(speed, OLED_CMD);      // 滚动速度 (0-7)
-    OLED_WR_Byte(end_page, OLED_CMD);   // 结束页
-    OLED_WR_Byte(0x00, OLED_CMD);       // 空字节
-    OLED_WR_Byte(0xFF, OLED_CMD);       // 空字节
-    break;
-
-  case OLED_SCROLL_RIGHT:
-    // 连续向右水平滚动
-    OLED_WR_Byte(0x26, OLED_CMD);       // 向右滚动命令
-    OLED_WR_Byte(0x00, OLED_CMD);       // 空字节
-    OLED_WR_Byte(start_page, OLED_CMD); // 起始页
-    OLED_WR_Byte(speed, OLED_CMD);      // 滚动速度 (0-7)
-    OLED_WR_Byte(end_page, OLED_CMD);   // 结束页
-    OLED_WR_Byte(0x00, OLED_CMD);       // 空字节
-    OLED_WR_Byte(0xFF, OLED_CMD);       // 空字节
-    break;
-
-  case OLED_SCROLL_UP:
-    // 向上滚动
-    OLED_WR_Byte(0xA3, OLED_CMD); // 设置垂直滚动区域
-    OLED_WR_Byte(0x00, OLED_CMD); // 滚动开始行
-    OLED_WR_Byte(64, OLED_CMD);   // 滚动高度(64行)
-    OLED_WR_Byte(0x00, OLED_CMD); // 滚动结束行
-    OLED_WR_Byte(0x29, OLED_CMD); // 垂直和水平向左滚动
-    OLED_WR_Byte(0x00, OLED_CMD);
-    OLED_WR_Byte(start_page, OLED_CMD);
-    OLED_WR_Byte(speed, OLED_CMD);
-    OLED_WR_Byte(end_page, OLED_CMD);
-    OLED_WR_Byte(0x01, OLED_CMD); // 垂直滚动偏移
-    break;
-
-  case OLED_SCROLL_DOWN:
-    // 向下滚动
-    OLED_WR_Byte(0xA3, OLED_CMD); // 设置垂直滚动区域
-    OLED_WR_Byte(0x00, OLED_CMD); // 滚动开始行
-    OLED_WR_Byte(64, OLED_CMD);   // 滚动高度(64行)
-    OLED_WR_Byte(0x00, OLED_CMD); // 滚动结束行
-    OLED_WR_Byte(0x2A, OLED_CMD); // 垂直和水平向右滚动
-    OLED_WR_Byte(0x00, OLED_CMD);
-    OLED_WR_Byte(start_page, OLED_CMD);
-    OLED_WR_Byte(speed, OLED_CMD);
-    OLED_WR_Byte(end_page, OLED_CMD);
-    OLED_WR_Byte(0x01, OLED_CMD); // 垂直滚动偏移
-    break;
-  }
-
-  // 启用滚动
-  OLED_WR_Byte(0x2F, OLED_CMD);
-}
-
-/**
- * @brief 停止SSD1306滚动
- */
-void OLED_Scroll_Stop(void) {
-  OLED_WR_Byte(0x2E, OLED_CMD); // 停止滚动命令
 }

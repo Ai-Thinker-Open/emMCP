@@ -20,6 +20,9 @@ void bsp_spi_dc_reset(void);
 void bsp_spi_dc_set(void);
 void bsp_spi_cs_reset(void);
 void bsp_spi_cs_set(void);
+void bsp_spi_user_cs_reset(void);
+void bsp_spi_user_cs_set(void);
 unsigned char bsp_spi_get_state(void);
 void bsp_spi_transmit(unsigned char data, unsigned int timeout);
+void bsp_spi_receive(unsigned char *data);
 #endif

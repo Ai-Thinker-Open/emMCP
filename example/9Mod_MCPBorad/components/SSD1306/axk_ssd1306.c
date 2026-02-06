@@ -9,6 +9,8 @@
  *
  */
 #include "axk_ssd1306.h"
+#include "gt20l16s/axk_gt20l16s.h"
+#include <stddef.h>
 #include <sys/_intsup.h>
 #include <sys/_types.h>
 /**
@@ -382,7 +384,7 @@ static unsigned short int axk_ssd1306_pow(unsigned char m, unsigned char n) {
 
 void axk_ssd1306_show_numble(unsigned char x, unsigned char y,
                              font_size_t font_size, unsigned char show_mode,
-                             unsigned short int num) {
+                             unsigned int num) {
   unsigned char t, temp, m = 0;
   if (font_size == 8)
     m = 2;
@@ -434,3 +436,175 @@ void axk_ssd1306_init(void) {
   axk_ssd1306_clear_screen();                          // 清屏
   axk_ssd1306_write_byte(0xAF, AXK_SSD1306_WRITE_CMD); // 打开显示
 }
+/**
+ * @brief 从字体芯片显示相关代码段
+ */
+#ifdef AXK_GT20L16_IS_AVAILABLE
+unsigned int fontaddr = 0;
+static void axk_ssd1306_display_data_form_font_chip(unsigned char x,
+                                                    unsigned char y,
+                                                    unsigned char *dp) {
+
+  if (x >= 128 || y >= 64 || (y + 2) > 8) {
+    return;
+  }
+  unsigned char i, j;
+  unsigned char current_page = y;
+
+  for (j = 0; j < 2; j++) {
+
+    unsigned char start_col = x;
+    unsigned char end_col = x + 15;
+    if (end_col >= 128) {
+      end_col = 128 - 1;
+    }
+    if (start_col > end_col) {
+      current_page++;
+      dp += 16;
+      continue;
+    }
+
+    axk_ssd1306_write_byte(0xB0 + current_page, AXK_SSD1306_WRITE_CMD);
+    axk_ssd1306_write_byte(0x10 | ((start_col >> 4) & 0x0F),
+                           AXK_SSD1306_WRITE_CMD);
+    axk_ssd1306_write_byte(0x00 | (start_col & 0x0F), AXK_SSD1306_WRITE_CMD);
+
+    unsigned char draw_cols = end_col - start_col + 1;
+    for (i = 0; i < draw_cols; i++) {
+      axk_ssd1306_write_byte(dp[i], AXK_SSD1306_WRITE_DATA);
+    }
+
+    current_page++;
+    dp += 16;
+  }
+}
+static void axk_ssd1306_display_data_form_font_chip_8x16(unsigned char x,
+                                                         unsigned char y,
+                                                         unsigned char *dp) {
+  unsigned char n, m;
+  for (n = 0; n < 2; n++) {
+    axk_ssd1306_set_address(x, y);
+    for (m = 0; m < 8; m++) {
+      axk_ssd1306_write_byte(*dp, AXK_SSD1306_WRITE_DATA);
+      dp++;
+    }
+    y++;
+  }
+}
+/**
+ * @brief 显示GB2312字符串
+ *
+ * @param x 显示起始列
+ * @param y 显示起始行
+ * @param str 要显示的字符串
+ */
+void axk_ssd1306_show_gb2312_str(unsigned char x, unsigned char y, char *str) {
+  unsigned char i = 0;
+  unsigned char addrHigh, addrMid, addrLow;
+  unsigned char fontbuf[32];
+  while (str[i] > 0x00) {
+    if ((str[i] >= 0xb0) && (str[i] <= 0xf7) && (str[i + 1] >= 0xa1)) {
+
+      fontaddr = (str[i] - 0xb0) * 94;
+      fontaddr += (str[i + 1] - 0xa1) + 846;
+      fontaddr = fontaddr * 32;
+      addrHigh = (fontaddr & 0xff0000) >> 16;
+      addrMid = (fontaddr & 0xff00) >> 8;
+      addrLow = (fontaddr & 0xff);
+
+      axk_gt20l16s_get_fonts_form_rom(addrHigh, addrMid, addrLow, fontbuf, 32);
+      axk_ssd1306_display_data_form_font_chip(x, y, fontbuf);
+      x += 16;
+      i += 2;
+    } else if ((str[i] >= 0xa1) && (str[i] <= 0xa3) && (str[i + 1] >= 0xa1)) {
+
+      fontaddr = (str[i] - 0xa1) * 94;
+      fontaddr += (str[i + 1] - 0xa1);
+      fontaddr = fontaddr * 32;
+
+      addrHigh = (fontaddr & 0xff0000) >> 16;
+      addrMid = (fontaddr & 0xff00) >> 8;
+      addrLow = (fontaddr & 0xff);
+
+      axk_gt20l16s_get_fonts_form_rom(addrHigh, addrMid, addrLow, fontbuf, 32);
+      axk_ssd1306_display_data_form_font_chip(x, y, fontbuf);
+      x += 16;
+      i += 2;
+    } else if ((str[i] >= 0x20) && (str[i] <= 0x7e)) {
+
+      unsigned char fontbuf[16];
+      fontaddr = (str[i] - 0x20);
+      fontaddr = (unsigned long)(fontaddr * 16);
+      fontaddr = (unsigned long)(fontaddr + 0x3cf80);
+
+      addrHigh = (fontaddr & 0xff0000) >> 16;
+      addrMid = (fontaddr & 0xff00) >> 8;
+      addrLow = fontaddr & 0xff;
+
+      axk_gt20l16s_get_fonts_form_rom(addrHigh, addrMid, addrLow, fontbuf, 16);
+      axk_ssd1306_display_data_form_font_chip_8x16(x, y, fontbuf);
+
+      x += 8;
+      i += 1;
+    } else
+      i++;
+  }
+}
+/**
+ * @brief 显示UTF-8字符串
+ *
+ * @param x 显示起始列
+ * @param y 显示起始行
+ * @param str 要显示的字符串
+ */
+void axk_ssd1306_show_utf8_str(unsigned char x, unsigned char y,
+                               const char *str) {
+  unsigned char i = 0;
+  unsigned char byte_len;
+  static unsigned char fontbuf[2]; // 增加数组大小以容纳字符串结束符
+  static unsigned char _fontbuf[16];
+  while (str[i] != '\0') {
+
+    // 先检查是否为单字节ASCII字符
+    if ((str[i] >= 0x20) && (str[i] <= 0x7e)) {
+
+      unsigned char addrHigh, addrMid, addrLow;
+      unsigned int fontaddr;
+      fontaddr = (str[i] - 0x20);
+      fontaddr = (unsigned long)(fontaddr * 16);
+      fontaddr = (unsigned long)(fontaddr + 0x3cf80);
+
+      addrHigh = (fontaddr & 0xff0000) >> 16;
+      addrMid = (fontaddr & 0xff00) >> 8;
+      addrLow = fontaddr & 0xff;
+
+      axk_gt20l16s_get_fonts_form_rom(addrHigh, addrMid, addrLow, _fontbuf, 16);
+      axk_ssd1306_display_data_form_font_chip_8x16(x, y, _fontbuf);
+
+      x += 8;
+      i += 1;
+    } else if (isStrUTF8(&str[i], 3)) {
+
+      // 处理UTF-8字符
+      unsigned int unicode = utf8_to_unicode(&str[i], &byte_len);
+      if (unicode == 0) {
+        i++;
+        continue;
+      }
+      unsigned int fontaddr = unicode_to_gb2312_fontaddr(unicode);
+      if (fontaddr == 0) {
+        i += byte_len;
+        continue;
+      }
+      axk_gt20l16s_get_fonts_form_rom(fontaddr >> 16 & 0XFF,
+                                      fontaddr >> 8 & 0XFF, fontaddr & 0XFF,
+                                      fontbuf, 2);
+      axk_ssd1306_show_gb2312_str(x, y, (char *)fontbuf);
+      x += 16;
+      i += byte_len;
+    } else {
+      i++;
+    }
+  }
+}
+#endif

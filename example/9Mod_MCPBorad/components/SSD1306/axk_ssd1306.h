@@ -19,10 +19,8 @@
 // 硬件抽象层宏定义
 #define AXK_SSD1306_ACLL(_func, ...) bsp_spi_##_func(__VA_ARGS__)
 
-// SPI 状态定义
-#define AXK_SSD1306_SPI_BUSY BSP_SPI_STATE_BUSY
 #define AXK_SSD1306_SPI_READY BSP_SPI_STATE_READY
-
+#define AXK_SSD1306_SPI_BUSY BSP_SPI_STATE_BUSY
 #else
 // 如果没有找到底层驱动，定义为空或报错
 #define AXK_SSD1306_ACLL()
@@ -34,6 +32,11 @@
 
 #endif
 
+#if __has_include("axk_gt20l16s.h")
+#include "axk_gt20l16s.h"
+#define AXK_GT20L16_IS_AVAILABLE
+
+#endif
 // 命令/数据标志
 #define AXK_SSD1306_WRITE_CMD 0
 #define AXK_SSD1306_WRITE_DATA 1
@@ -171,5 +174,10 @@ void axk_ssd1306_show_str(unsigned char x, unsigned char y,
  */
 void axk_ssd1306_show_numble(unsigned char x, unsigned char y,
                              font_size_t font_size, unsigned char show_mode,
-                             unsigned short int num);
+                             unsigned int num);
+#ifdef AXK_GT20L16_IS_AVAILABLE
+void axk_ssd1306_show_gb2312_str(unsigned char x, unsigned char y, char *str);
+void axk_ssd1306_show_utf8_str(unsigned char x, unsigned char y, const char *str);
+
+#endif
 #endif

@@ -53,6 +53,20 @@ void bsp_spi_cs_set(void) {
   HAL_GPIO_WritePin(OLED_CS1_GPIO_Port, OLED_CS1_Pin, GPIO_PIN_SET);
 }
 /**
+ * @brief 重置用户CS引脚
+ *
+ */
+void bsp_spi_user_cs_reset(void) {
+  HAL_GPIO_WritePin(CS2_GPIO_Port, CS2_Pin, GPIO_PIN_RESET);
+}
+/**
+ * @brief 设置用户CS引脚
+ *
+ */
+void bsp_spi_user_cs_set(void) {
+  HAL_GPIO_WritePin(CS2_GPIO_Port, CS2_Pin, GPIO_PIN_SET);
+}
+/**
  * @brief 获取SPI1状态
  *
  * @return unsigned char
@@ -79,4 +93,17 @@ void bsp_spi_transmit(unsigned char data, unsigned int timeout) {
   while (HAL_SPI_GetState(&hspi1) == HAL_SPI_STATE_BUSY)
     ;
   HAL_SPI_Transmit(&hspi1, &data, 1, timeout);
+}
+/**
+ * @brief 接收SPI1数据
+ *
+ * @param data 接收数据的指针
+ */
+void bsp_spi_receive(unsigned char *data) {
+  if (data == NULL) {
+    return;
+  }
+  while (HAL_SPI_GetState(&hspi1) == HAL_SPI_STATE_BUSY)
+    ;
+  HAL_SPI_Receive(&hspi1, data, 1, 100);
 }

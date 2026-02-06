@@ -21,6 +21,7 @@
 #include "FreeRTOS.h"
 #include "cmsis_os.h"
 #include "main.h"
+#include "stm32f10x_bsp_i2c.h"
 #include "task.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -221,7 +222,7 @@ void sht3x_read_task(void *argument) {
   for (;;) {
 
     osDelay(pdMS_TO_TICKS(1000));
-    axk_relay_toggle();
+    // axk_relay_toggle();
     if (!sht30_is_init) {
       continue;
     }
@@ -246,14 +247,17 @@ void sht3x_read_task(void *argument) {
 void ws2812_modeTask(void *argument) {
   /* USER CODE BEGIN ws2812_modeTask */
   /* Infinite loop */
+  delay_ms(50);
   axk_ssd1306_init();
   axk_ssd1306_set_color_turn(0);
   axk_ssd1306_set_display_turn(0);
   axk_ssd1306_clear_screen();
-  axk_ssd1306_show_str(16, 0, FONT_SIEZE_16, 0,
-                       (unsigned char *)"Hello World!");
+  axk_ssd1306_show_str(16, 0, FONT_SIEZE_16, 0, (unsigned char *)"Hello World");
   axk_ssd1306_show_numble(0, 16, FONT_SIEZE_16, 0, 1234);
   axk_ssd1306_refresh();
+  delay_ms(2000);
+  axk_ssd1306_clear_screen();
+  axk_ssd1306_show_utf8_str(1, 4, "你好，世界！");
   axk_ws2812_init(&ws2812);
   for (;;) {
     smoothcolorTransition(RED, BLUE, 500, smoothcolorTransition_callbark, NULL);
