@@ -11,10 +11,11 @@
 #ifndef __STM32F10X_BSP_SPI_H__
 #define __STM32F10X_BSP_SPI_H__
 
-#define HAL_SPI_STATE_BUSY 1
-#define HAL_SPI_STATE_READY 0
+#define BSP_SPI_STATE_ERROR 0x04
+#define BSP_SPI_STATE_BUSY 0x01
+#define BSP_SPI_STATE_READY 0x00
 
-void bsp_spi_init(void);
+unsigned char bsp_spi_init(void);
 void bsp_spi_dc_reset(void);
 void bsp_spi_dc_set(void);
 void bsp_spi_cs_reset(void);
