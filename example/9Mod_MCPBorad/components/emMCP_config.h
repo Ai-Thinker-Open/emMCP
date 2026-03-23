@@ -29,6 +29,7 @@ extern "C" {
 // FreeRTOS 头文件
 #include "FreeRTOS.h"
 #include "cmsis_os.h"
+#include "usart.h"
 
 // 项目日志头文件
 #include "log.h"
@@ -38,4 +39,18 @@ extern "C" {
 #define emMCP_free      vPortFree
 #define emMCP_delay     osDelay
 
+/* ========================================================================== */
+/* 串口发送函数配置                                                           */
+/* ========================================================================== */
+#define emMCP_uart_send(data, len)  HAL_UART_Transmit(&huart1, (uint8_t*)(data), (len), HAL_MAX_DELAY)
+
+#ifndef emMCP_uart_send
+    // 默认使用 uartPortSendData 函数
+    // 用户可以在 emMCP_config.h 中覆盖此定义
+    #include "uartPort.h"
+    #define emMCP_uart_send  uartPortSendData
+#endif
+#ifdef __cplusplus
+}
+#endif
 #endif // __EMMCP_PORT_CONFIG_H__

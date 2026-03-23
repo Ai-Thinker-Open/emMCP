@@ -39,7 +39,7 @@ int uartPortSendData(char *data, int len)
 
     // TODO: 用户需要在这里实现具体的串口发送逻辑
     // 例如：HAL_UART_Transmit(&huart1, (uint8_t*)data, len, HAL_MAX_DELAY);
-
+    emMCP_uart_send(data, len);
     return 0; // 返回发送状态
 }
 

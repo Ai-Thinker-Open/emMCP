@@ -25,7 +25,7 @@ extern "C" {
 
 // STM32 HAL 头文件
 #include "stm32f4xx_hal.h"  // 根据你的芯片型号修改
-
+#include "usart.h"          // UART 相关头文件
 #include"FreeRTOS.h"
 #include"cmsis_os.h"
 
@@ -36,5 +36,10 @@ extern "C" {
 #define emMCP_malloc    pvPortMalloc
 #define emMCP_free      vPortFree
 #define emMCP_delay     osDelay
+#define emMCP_uart_send(data, len)                                             \
+  HAL_UART_Transmit(&huart1, (uint8_t *)(data), (len), HAL_MAX_DELAY)
 
+#ifdef __cplusplus
+}
+#endif
 #endif // __EMMCP_PORT_CONFIG_H__

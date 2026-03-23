@@ -27,7 +27,7 @@ extern "C" {
 #include "stm32f1xx_hal.h"  // 根据你的芯片型号修改
 
 #include"stdlib.h"
-
+#include "usart.h"
 // 项目日志头文件
 #include "log.h"
 
@@ -35,5 +35,8 @@ extern "C" {
 #define emMCP_malloc    malloc
 #define emMCP_free      free
 #define emMCP_delay     HAL_Delay
-
+#define emMCP_uart_send(data, len)  HAL_UART_Transmit(&huart1, (uint8_t*)(data), (len), HAL_MAX_DELAY)
+#ifdef __cplusplus
+}
+#endif
 #endif // __EMMCP_PORT_CONFIG_H__

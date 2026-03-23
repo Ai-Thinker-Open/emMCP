@@ -109,6 +109,9 @@ extern "C" {
     #error "emMCP_delay must be defined. Please define emMCP_delay in your emMCP_port_config.h or before including uartPort.h. Example: #define emMCP_delay HAL_Delay"
 #endif
 
+#ifndef emMCP_uart_send
+    #error "emMCP_uart_send is not defined"
+#endif
 /**
  * @brief 宏定义验证
  * 
