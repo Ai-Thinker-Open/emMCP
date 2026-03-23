@@ -35,6 +35,10 @@
     {
       "name": "stlink-upgrader",
       "version": "3.16.8+st.3"
+    },
+    {
+      "name": "adoptium-jre",
+      "version": "17.0.15+6.st.1"
     }
   ]
 }
