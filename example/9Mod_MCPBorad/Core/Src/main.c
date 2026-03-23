@@ -32,7 +32,7 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+// 检查 EMCP_USER_CONFIG_FILE 是否被定义
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/

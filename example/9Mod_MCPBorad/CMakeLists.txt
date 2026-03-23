@@ -38,25 +38,27 @@ add_executable(${CMAKE_PROJECT_NAME})
 add_subdirectory(cmake/stm32cubemx)
 add_subdirectory(components)
 add_subdirectory(Bsp)
+
+# 在添加 emMCP 之前设置配置文件路径
+# 方式1：直接指定完整文件路径（推荐，支持任意文件名）
+# 注意：这里不需要额外的引号，CMake 会自动处理
+set(EMCP_USER_CONFIG_FILE ${CMAKE_CURRENT_SOURCE_DIR}/components/emMCP_config.h)
+
+add_subdirectory(../../../emMCP emMCP)
+
 # Link directories setup
 target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined library search paths
 )
 
-file(GLOB EMMCP_SRC_FILES  "emMCP/port/*.c" "emMCP/uart-mcp/*.c" "emMCP/uart-mcp/cJSON/*.c")
+
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
-      ${BSP_SRC_FILES}
-      ${EMMCP_SRC_FILES}
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user defined include paths
-    emMCP/port
-    emMCP/uart-mcp
-    emMCP/uart-mcp/cJSON
 )
 
 # Add project symbols (macros)
@@ -74,4 +76,7 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     # Add user defined libraries
     components
     bsp
+    emMCP
 )
+
+
