@@ -406,6 +406,13 @@ emMCP_ResponsiveToolRequest(char *tool_name, cJSON *arguments)
     }
   }
 
+  // 检查是否找到匹配的工具，防止数组越界
+  if (tools_numble >= MCP_SERVER_TOOL_NUMBLE_MAX)
+  {
+    emMCP_log_error("Tool not found: %s", tool_name); // 记录错误日志
+    return;                                           // 返回
+  }
+
   if (strcmp(mcp_tool_arry[tools_numble].name, tool_name) == 0)
   { // 确认找到了匹配的工具
     // 判断 arguments 参数是否为 NULL
@@ -612,6 +619,30 @@ static emMCP_event_t emMCP_ReturnEvent(
                                 msgType_param); // 响应工具请求
     //   }
     // }
+  }
+  else if (msgType != NULL && strcmp(msgType->valuestring, "mcp_check") == 0)
+  {                                               // 如果是MCP检查消息
+    emMCP_event = emMCP_EVENT_AI_MCP_CHECK;       // 设置事件为MCP检查命令
+    *param_type = MCP_SERVER_TOOL_TYPE_OBJECT;    // 设置参数类型为对象
+    cJSON *mcp_toolsname =
+        cJSON_GetObjectItemCaseSensitive(root, "tools"); // 获取工具名
+    if (mcp_toolsname == NULL ||
+        mcp_toolsname->type != cJSON_String)
+    {                          // 检查工具名是否为字符串
+      cJSON_Delete(root);      // 删除JSON对象
+      return emMCP_EVENT_NONE; // 返回无事件
+    }
+    msgType_param =
+        cJSON_GetObjectItemCaseSensitive(root, "data"); // 获取数据参数
+    if (msgType_param == NULL ||
+        msgType_param->type != cJSON_Object)
+    {                          // 检查数据参数是否为对象
+      cJSON_Delete(root);      // 删除JSON对象
+      return emMCP_EVENT_NONE; // 返回无事件
+    }
+    // 处理MCP检查工具请求
+    emMCP_ResponsiveToolRequest(mcp_toolsname->valuestring,
+                                msgType_param); // 响应工具请求
   }
   else if (msgType != NULL && strcmp(msgType->valuestring, "MCP Text") == 0)
   {                                          // 如果是MCP文本消息

@@ -64,6 +64,7 @@ typedef enum {
   emMCP_EVENT_AI_OTAERR,
   emMCP_EVENT_AI_MCP_CMD,
   emMCP_EVENT_AI_MCP_Text,
+  emMCP_EVENT_AI_MCP_CHECK,  // MCP 检查命令
 } emMCP_event_t;
 /**
  * @brief 属性结构体
