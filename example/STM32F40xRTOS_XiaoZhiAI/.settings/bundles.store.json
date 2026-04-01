@@ -2,43 +2,47 @@
   "bundles": [
     {
       "name": "cmake",
-      "version": "4.0.1+st.3"
+      "version": "4.2.3+st.1"
     },
     {
       "name": "ninja",
-      "version": "1.13.1+st.1"
+      "version": "1.13.2+st.1"
     },
     {
       "name": "gnu-tools-for-stm32",
-      "version": "13.3.1+st.9"
+      "version": "14.3.1+st.2"
     },
     {
       "name": "st-arm-clangd",
-      "version": "^19.1.2+st.3"
+      "version": "21.1.0+st.2"
     },
     {
       "name": "stlink-gdbserver",
-      "version": "7.10.0+st.3"
+      "version": "7.13.0+st.3"
     },
     {
       "name": "jlink-gdbserver",
-      "version": "8.38.0+st.1"
+      "version": "9.14.1+st.1"
     },
     {
       "name": "gnu-gdb-for-stm32",
-      "version": "13.3.1+st.10"
+      "version": "14.3.1+st.2"
     },
     {
       "name": "stlink-server",
-      "version": "2.1.1+st.7"
+      "version": "2.1.1+st.8"
     },
     {
       "name": "stlink-upgrader",
-      "version": "3.16.8+st.3"
+      "version": "3.17.10+st.1"
     },
     {
       "name": "adoptium-jre",
-      "version": "17.0.15+6.st.1"
+      "version": "21.0.8+9.st.2"
+    },
+    {
+      "name": "programmer",
+      "version": "2.22.0+st.1"
     }
   ]
 }

@@ -71,7 +71,7 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
   if (huart == &huart2) {
     log_info("%.*s", Size, rxBuffer);
     uartPortRecvData((char *)rxBuffer, Size);
-
+    emMCP_uart_send(rxBuffer, Size);
     HAL_UARTEx_ReceiveToIdle_DMA(&huart2, rxBuffer, RX_BUFFER_SIZE);
     __HAL_DMA_DISABLE_IT(&hdma_usart2_rx, DMA_IT_HT);
   }
