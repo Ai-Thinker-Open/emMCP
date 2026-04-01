@@ -42,7 +42,7 @@ extern "C" {
 /* ========================================================================== */
 /* 串口发送函数配置                                                           */
 /* ========================================================================== */
-#define emMCP_uart_send(data, len)  HAL_UART_Transmit(&huart1, (uint8_t*)(data), (len), HAL_MAX_DELAY)
+#define emMCP_uart_send(data, len)  HAL_UART_Transmit(&huart2, (uint8_t*)(data), (len), HAL_MAX_DELAY)
 
 #ifndef emMCP_uart_send
     // 默认使用 uartPortSendData 函数

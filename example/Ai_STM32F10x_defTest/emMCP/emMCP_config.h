@@ -37,7 +37,7 @@ extern "C" {
 #define emMCP_malloc    pvPortMalloc
 #define emMCP_free      vPortFree
 #define emMCP_delay     osDelay
-#define emMCP_uart_send(data, len)  HAL_UART_Transmit(&huart1, (uint8_t*)(data), (len), HAL_MAX_DELAY)
+#define emMCP_uart_send(data, len)  HAL_UART_Transmit(&huart2, (uint8_t*)(data), (len), HAL_MAX_DELAY)
 #ifdef __cplusplus
 }
 #endif
