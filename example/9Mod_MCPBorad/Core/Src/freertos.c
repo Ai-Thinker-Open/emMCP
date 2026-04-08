@@ -161,7 +161,7 @@ void StartDefaultTask(void *argument) {
   emMCP_Init(&emMCP);
   for (;;) {
     // osDelay();
-    emMCP_TickHandle(100);
+    emMCP_TickHandle(10);
   }
   /* USER CODE END StartDefaultTask */
 }
@@ -266,9 +266,17 @@ void ws2812_modeTask(void *argument) {
 /* USER CODE BEGIN Application */
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
   if (huart == &huart2) {
-    uartPortRecvData((char *)rxBuffer, Size);
-
-    HAL_UARTEx_ReceiveToIdle_DMA(&huart2, rxBuffer, RXBUFFSER_MAX_SIZE);
+    // 检查事件类型：IDLE事件或传输完成事件
+    if (huart->RxEventType == HAL_UART_RXEVENT_IDLE || 
+        huart->RxEventType == HAL_UART_RXEVENT_TC) {
+      if (Size > 0 && Size <= RXBUFFSER_MAX_SIZE) {
+        // 复制数据到静态缓冲区（在中断中安全）
+        uartPortRecvData((char *)rxBuffer, Size);
+      }
+    }
+    
+    // 重新启动DMA接收（NORMAL模式需要）
+    HAL_UARTEx_ReceiveToIdle_DMA(&huart2, (uint8_t *)rxBuffer, RXBUFFSER_MAX_SIZE);
     __HAL_DMA_DISABLE_IT(huart2.hdmarx, DMA_IT_HT);
   }
 }
