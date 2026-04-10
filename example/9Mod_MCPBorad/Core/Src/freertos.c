@@ -161,7 +161,7 @@ void StartDefaultTask(void *argument) {
   emMCP_Init(&emMCP);
   for (;;) {
     // osDelay();
-    emMCP_TickHandle(100);
+    emMCP_TickHandle(10);
   }
   /* USER CODE END StartDefaultTask */
 }

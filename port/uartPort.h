@@ -162,6 +162,25 @@ void uartPortSetDataBuf(char *buf);
  */
 char *uartPortGetDataBuf(void);
 
+/**
+ * @brief 获取接收到的数据（在任务上下文中调用）
+ * 
+ * @note 此函数从双缓冲区中获取数据，是线程安全的
+ * @return char* 数据指针，NULL表示没有新数据
+ */
+char *uartPortGetRxData(void);
+
+/**
+ * @brief 标记数据已处理（在任务上下文中调用）
+ * 
+ * @note 调用此函数后，中断可以接收新数据
+ */
+void uartPortClearRxData(void);
+
+/* 调试变量 - 可以在调试器中查看 */
+extern volatile uint32_t g_uart_rx_count;
+extern volatile uint32_t g_uart_rx_size;
+
 #ifdef __cplusplus
 }
 #endif
