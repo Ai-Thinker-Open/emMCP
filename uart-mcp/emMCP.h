@@ -21,7 +21,7 @@
 
 // 内存优化：减少默认配置，用户可根据需要修改
 #ifndef MCP_SERVER_TOOL_NUMBLE_MAX
-#define MCP_SERVER_TOOL_NUMBLE_MAX 2             // 工具数量（默认2，原4）
+#define MCP_SERVER_TOOL_NUMBLE_MAX 4             // 工具数量（默认2，原4）
 #endif
 #ifndef MCP_SERVER_TOOL_PROPERTIES_NUM
 #define MCP_SERVER_TOOL_PROPERTIES_NUM 4         // 属性数量（默认4，原6）

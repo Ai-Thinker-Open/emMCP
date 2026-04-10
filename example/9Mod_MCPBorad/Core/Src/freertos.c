@@ -194,6 +194,7 @@ void StartDefaultTask(void *argument) {
   };
   emMCP_AddToolToToolList(&relay_tool);
   emMCP_AddToolToToolList(&sht3x_tool);
+  
   emMCP_RegistrationTools();
 
   for (;;) {
