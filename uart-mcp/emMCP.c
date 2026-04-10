@@ -49,23 +49,37 @@ emMCP_LogLevel log_level = emMCP_LOG_LEVEL_DEBUG;
  * 该数组用于将AI设备返回的字符串状态映射到对应的emMCP事件，
  * 用于事件的快速匹配和转换。高频场景优先放在前面，减少比较次数。
  */
+// 内存优化：精简状态映射表，仅保留核心功能
+// 用户可通过定义 EMCP_FULL_STATUS_MAP 启用完整功能
+#ifndef EMCP_FULL_STATUS_MAP
 static const status_map_entry_t status_map[] = {
-    // 高频场景优先放在前面，减少比较次数
+    // 核心功能（约节省 50% Flash）
     {"OK", 2, emMCP_EVENT_CMD_OK, false},                           // 命令执行成功
-    {"ERROR", 5, emMCP_EVENT_CMD_ERROR, true},                      // 命令执行错误（前缀匹配，匹配所有以ERROR开头的字符串）
+    {"ERROR", 5, emMCP_EVENT_CMD_ERROR, true},                      // 命令执行错误
     {"AI Start", 8, emMCP_EVENT_AI_START, false},                   // AI设备启动完成
-    {"WIFI_CONNECTED", 12, emMCP_EVENT_AI_WIFI_CONNECTED, false},   // WIFI连接成功
-    {"WIFI_GOT_IP", 11, emMCP_EVENT_AI_WIFI_GOT_IP, false},         // WIFI获取到IP地址
-    {"1.WiFi connect OK", 16, emMCP_EVENT_AI_WIFI_CONNNECT, false}, // WiFi连接成功（旧版本格式）
     {"2.WakeUP", 8, emMCP_EVENT_AI_WAKE, false},                    // AI设备唤醒
     {"3.Sleep", 6, emMCP_EVENT_AI_SLEEP, false},                    // AI设备进入睡眠
-    {"4.NetCFG", 7, emMCP_EVENT_AI_NETCFG, false},                  // 网络配置模式
-    {"5.NetERR", 7, emMCP_EVENT_AI_NETERR, false},                  // 网络错误
-    {"6.OTAUPDATE", 10, emMCP_EVENT_AI_OTAUPDATE, false},           // OTA更新中
-    {"7.OTA OK", 7, emMCP_EVENT_AI_OTAOK, false},                   // OTA更新成功
-    {"8.OTA ERR", 8, emMCP_EVENT_AI_OTAERR, false},                 // OTA更新错误
     {NULL, 0, emMCP_EVENT_NONE, false}                              // 结束标记
 };
+#else
+static const status_map_entry_t status_map[] = {
+    // 完整功能
+    {"OK", 2, emMCP_EVENT_CMD_OK, false},
+    {"ERROR", 5, emMCP_EVENT_CMD_ERROR, true},
+    {"AI Start", 8, emMCP_EVENT_AI_START, false},
+    {"WIFI_CONNECTED", 12, emMCP_EVENT_AI_WIFI_CONNECTED, false},
+    {"WIFI_GOT_IP", 11, emMCP_EVENT_AI_WIFI_GOT_IP, false},
+    {"1.WiFi connect OK", 16, emMCP_EVENT_AI_WIFI_CONNNECT, false},
+    {"2.WakeUP", 8, emMCP_EVENT_AI_WAKE, false},
+    {"3.Sleep", 6, emMCP_EVENT_AI_SLEEP, false},
+    {"4.NetCFG", 7, emMCP_EVENT_AI_NETCFG, false},
+    {"5.NetERR", 7, emMCP_EVENT_AI_NETERR, false},
+    {"6.OTAUPDATE", 10, emMCP_EVENT_AI_OTAUPDATE, false},
+    {"7.OTA OK", 7, emMCP_EVENT_AI_OTAOK, false},
+    {"8.OTA ERR", 8, emMCP_EVENT_AI_OTAERR, false},
+    {NULL, 0, emMCP_EVENT_NONE, false}
+};
+#endif
 /**
  * @brief emMCP 串口数据缓存区
  *
@@ -415,25 +429,28 @@ emMCP_ResponsiveToolRequest(char *tool_name, cJSON *arguments)
 
   if (strcmp(mcp_tool_arry[tools_numble].name, tool_name) == 0)
   { // 确认找到了匹配的工具
-    // 判断 arguments 参数是否为 NULL
-    if (arguments->type == cJSON_Object && arguments->child == NULL)
-    {                                                             // 如果参数是空对象
+    // 判断 arguments 参数是否为 NULL 或空对象
+    if (arguments == NULL || (arguments->type == cJSON_Object && arguments->child == NULL))
+    {                                                             // 如果参数为空或空对象
       mcp_tool_arry[tools_numble].checkRequestHandler(arguments); // 调用检查请求处理器
       return;                                                     // 返回
     }
+    // 判断参数值是否为 null（如 {"sht3x.read":null}）
+    if (arguments->child != NULL && arguments->child->type == cJSON_NULL)
+    {
+      mcp_tool_arry[tools_numble].checkRequestHandler(arguments); // 调用检查请求处理器
+      return;
+    }
     //  判断是否为 methods 参数
-    if (cJSON_GetObjectItem(arguments, METHODS) != NULL)
+    cJSON *methods_item = cJSON_GetObjectItemCaseSensitive(arguments, METHODS);
+    if (methods_item != NULL)
     {                                                // 检查是否有methods参数
       mcp_tool_arry[tools_numble].setRequestHandler( // 调用设置请求处理器
-          cJSON_GetObjectItem(arguments, METHODS));
-    }
-    else if ((arguments->type == cJSON_Object && arguments->child == NULL) || (arguments->type == cJSON_Object && arguments->child != NULL && arguments->child->type != cJSON_NULL))
-    {
-      mcp_tool_arry[tools_numble].setRequestHandler(arguments); // 调用设置请求处理器
+          methods_item);
     }
     else
     {
-      mcp_tool_arry[tools_numble].checkRequestHandler(arguments); // 调用检查请求处理器
+      mcp_tool_arry[tools_numble].setRequestHandler(arguments); // 调用设置请求处理器
     }
     return; // 返回
   }
@@ -705,13 +722,17 @@ void emMCP_UpdateUartRecv(bool isRecv)
  *
  * @param delay_ms 延时时间
  */
-// 调试用的变量
+// 内存优化：调试变量可通过定义 EMCP_ENABLE_DEBUG_VARS 启用
+#ifdef EMCP_ENABLE_DEBUG_VARS
 volatile uint32_t g_emMCP_tick_count = 0;
 volatile uint32_t g_emMCP_process_count = 0;
+#endif
 
 void emMCP_TickHandle(int delay_ms)
 { // emMCP主循环处理函数
+#ifdef EMCP_ENABLE_DEBUG_VARS
   g_emMCP_tick_count++;
+#endif
   
   if (emMCP_dev == NULL ||
       emMCP_dev->tools_arry == NULL || // 检查设备、工具数组和回调函数是否有效
@@ -765,6 +786,8 @@ void emMCP_TickHandle(int delay_ms)
     }
   }
 }
+// 内存优化：可选功能，通过定义 EMCP_ENABLE_EXTRA_CMDS 启用
+#ifdef EMCP_ENABLE_EXTRA_CMDS
 /**
  * @brief 设置通讯波特率
  *
@@ -787,9 +810,6 @@ int emMCP_SetBaudrate(uint16_t baudrate)
 
   // 构造设置波特率的JSON命令
   sprintf(cmd, "baudrate-set {\"role\":\"MCU\",\"msgType\":\"status\",\"data\":%d}\r\n", baudrate);
-  // 注释掉的备选实现方式
-  // snprintf(cmd, 128, "baudrate-set
-  // {\"role\":\"MCU\",\"msgType\":\"status\",\"status\":%d}\r\n", baudrate);
 
   // 通过串口发送命令
   uartPortSendData(cmd, strlen(cmd));
@@ -826,11 +846,6 @@ int emMCP_SetAiWakeUp(uint8_t WakeUp_Time)
 
   // 构造唤醒命令的JSON格式
   sprintf(cmd, "wake-up {\"role\":\"MCU\",\"msgType\":\"wake-up\",\"data\":%d}\r\n", WakeUp_Time);
-
-  // 注释掉的备选实现方式
-  // snprintf(cmd, 128, "wake-up
-  // {\"role\":\"MCU\",\"msgType\":\"wake-up\",\"wake-up\":%d}\r\n",
-  // WakeUp_Time);
 
   // 通过串口发送命令，并获取返回值
   int ret = uartPortSendData(cmd, strlen(cmd));
@@ -897,6 +912,7 @@ uint8_t emMCP_CheckAiVolume(void)
   }
   return emMCP_AiVolume;
 }
+#endif /* EMCP_ENABLE_EXTRA_CMDS */
 /**
  * @brief emMCP 响应控制结果
  *

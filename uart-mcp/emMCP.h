@@ -19,10 +19,19 @@
 
 #define emMCP_VERSION "1.0.0" // emMCP版本号
 
-#define MCP_SERVER_TOOL_NUMBLE_MAX 4             // 工具数量
-#define MCP_SERVER_TOOL_PROPERTIES_NUM 6         // 属性数量
-#define MCP_SERVER_TOOL_METHODS_NUM 5            // 方法数量
-#define MCP_SERVER_TOOL_METHODS_PARAMETERS_NUM 5 // 方法参数数量
+// 内存优化：减少默认配置，用户可根据需要修改
+#ifndef MCP_SERVER_TOOL_NUMBLE_MAX
+#define MCP_SERVER_TOOL_NUMBLE_MAX 2             // 工具数量（默认2，原4）
+#endif
+#ifndef MCP_SERVER_TOOL_PROPERTIES_NUM
+#define MCP_SERVER_TOOL_PROPERTIES_NUM 4         // 属性数量（默认4，原6）
+#endif
+#ifndef MCP_SERVER_TOOL_METHODS_NUM
+#define MCP_SERVER_TOOL_METHODS_NUM 2            // 方法数量（默认2，原5）
+#endif
+#ifndef MCP_SERVER_TOOL_METHODS_PARAMETERS_NUM
+#define MCP_SERVER_TOOL_METHODS_PARAMETERS_NUM 3 // 方法参数数量（默认3，原5）
+#endif
 
 #define emMCP_CTRL_OK "true"
 #define emMCP_CTRL_ERROR "false"
@@ -172,6 +181,9 @@ cJSON *emMCP_GetParam(cJSON *params, char *param_name);
  * @return int
  */
 int emMCP_RegistrationTools(void);
+
+// 内存优化：可选功能，通过定义 EMCP_ENABLE_EXTRA_CMDS 启用
+#ifdef EMCP_ENABLE_EXTRA_CMDS
 /**
  * @brief 设置波特率
  *
@@ -199,6 +211,7 @@ int emMCP_SetAiVolume(uint8_t volume);
  * @return uint8_t
  */
 uint8_t emMCP_CheckAiVolume(void);
+#endif
 /**
  * @brief 检查串口发送状态
  *

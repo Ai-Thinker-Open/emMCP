@@ -206,6 +206,7 @@ void TIM4_IRQHandler(void)
 
 /**
   * @brief This function handles USART2 global interrupt.
+  * @note  使用 HAL 标准中断处理，确保 HAL_UARTEx_ReceiveToIdle_DMA 正常工作
   */
 void USART2_IRQHandler(void)
 {

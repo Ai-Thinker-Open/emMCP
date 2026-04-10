@@ -15,8 +15,31 @@ set(CMAKE_C_EXTENSIONS ON)
 
 # Define the build type
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE "Debug")
+    set(CMAKE_BUILD_TYPE "MinSizeRel")
 endif()
+
+# ============================================================================
+# 内存优化设置（关键！）
+# ============================================================================
+# 使用 MinSizeRel 模式 (-Os) 替代 Release (-O3)
+# 对于 Flash 受限的 STM32F103，大小优化比速度优化更重要
+
+# 覆盖默认的 Release 标志（默认是 -O3）
+set(CMAKE_C_FLAGS_RELEASE "-Os -DNDEBUG -ffunction-sections -fdata-sections")
+set(CMAKE_CXX_FLAGS_RELEASE "-Os -DNDEBUG -ffunction-sections -fdata-sections")
+set(CMAKE_EXE_LINKER_FLAGS_RELEASE "-Wl,--gc-sections")
+
+# MinSizeRel 已经使用 -Os，额外添加链接优化
+set(CMAKE_C_FLAGS_MINSIZEREL "-Os -DNDEBUG -ffunction-sections -fdata-sections")
+set(CMAKE_CXX_FLAGS_MINSIZEREL "-Os -DNDEBUG -ffunction-sections -fdata-sections")
+set(CMAKE_EXE_LINKER_FLAGS_MINSIZEREL "-Wl,--gc-sections")
+
+# 禁用未使用函数（重要优化）
+add_compile_options(-ffunction-sections -fdata-sections)
+add_link_options(-Wl,--gc-sections)
+
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+message(STATUS "C Flags: ${CMAKE_C_FLAGS_${CMAKE_BUILD_TYPE}}")
 
 # Set the project name
 set(CMAKE_PROJECT_NAME 9Mod_MCPBorad)

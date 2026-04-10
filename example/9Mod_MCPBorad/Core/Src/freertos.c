@@ -19,7 +19,9 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "FreeRTOS.h"
+#include "cJSON.h"
 #include "cmsis_os.h"
+#include "log.h"
 #include "main.h"
 #include "stm32f10x_bsp_i2c.h"
 #include "task.h"
@@ -35,6 +37,7 @@
 #include "uartPort.h"
 #include "usart.h"
 #include <stdint.h>
+#include <time.h>
 
 /* USER CODE END Includes */
 
@@ -89,8 +92,11 @@ color_t GREEN = {0x00, 0xff, 0x00};
 color_t BLUE = {0x00, 0x00, 0xff};
 bool sht30_is_init = false;
 bool ch224_is_init = false;
-
+double temperature = 0.0;
+double humidity = 0.0;
 static void smoothcolorTransition_callbark(color_t color, void *arg);
+static void relay_tool_callbark(void* arg);
+static void sht3x_tool_callbark(void* arg);
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void *argument);
@@ -159,6 +165,37 @@ void StartDefaultTask(void *argument) {
   HAL_UARTEx_ReceiveToIdle_DMA(&huart2, (uint8_t *)rxBuffer, sizeof(rxBuffer));
   __HAL_DMA_DISABLE_IT(huart2.hdmarx, DMA_IT_HT);
   emMCP_Init(&emMCP);
+
+  static emMCP_tool_t relay_tool={
+    .name = "self.relay",
+    .description="Relay status control and query tool",
+    .inputSchema.properties[0].name = "relay.enable",
+    .inputSchema.properties[0].description = "Relay switch, true is on, false is off",
+    .inputSchema.properties[0].type = MCP_SERVER_TOOL_TYPE_BOOLEAN,
+    .inputSchema.properties[1].name= "relay.status",
+    .inputSchema.properties[1].description = "Relay status, check relay status,null is check",
+    .inputSchema.properties[1].type = MCP_SERVER_TOOL_TYPE_BOOLEAN,
+    .checkRequestHandler=relay_tool_callbark,
+    .setRequestHandler=relay_tool_callbark,
+  };
+  static emMCP_tool_t sht3x_tool = {
+    .name = "self.sht3x",
+    .description = "SHT3X temperature and humidity sensor tool",
+    .inputSchema.properties[0].name = "sht3x.temprature",
+    .inputSchema.properties[0].description =
+        "Read SHT3X temperature,null is read,accuracy of 0.1",
+    .inputSchema.properties[0].type = MCP_SERVER_TOOL_TYPE_NUMBER,
+    .inputSchema.properties[1].name = "sht3x.humidity",
+    .inputSchema.properties[1].description =
+        "Read SHT3X humidity,null is read",
+    .inputSchema.properties[1].type = MCP_SERVER_TOOL_TYPE_NUMBER,
+    .checkRequestHandler=sht3x_tool_callbark,
+    .setRequestHandler=sht3x_tool_callbark,
+  };
+  emMCP_AddToolToToolList(&relay_tool);
+  emMCP_AddToolToToolList(&sht3x_tool);
+  emMCP_RegistrationTools();
+
   for (;;) {
     // osDelay();
     emMCP_TickHandle(10);
@@ -217,8 +254,7 @@ void sht3x_read_task(void *argument) {
  
   // 初始化WS2812灯条
 
-  double temperature = 0.0;
-  double humidity = 0.0;
+ 
   for (;;) {
 
     osDelay(pdMS_TO_TICKS(1000));
@@ -286,6 +322,53 @@ static void smoothcolorTransition_callbark(color_t color, void *arg) {
   axk_ws2812_set_all_pixels_color(color.r, color.g, color.b,
                                   axk_ws2812_strip_dev->brightness);
   vTaskDelay(pdMS_TO_TICKS(5));
+}
+
+
+static void relay_tool_callbark(void* arg) 
+{
+
+  if(arg==NULL) {
+    log_error("relay_tool_callbark arg is null");
+    return;
+  }
+  cJSON* param=(cJSON*)arg;
+  cJSON* relay_enable=cJSON_GetObjectItemCaseSensitive(param,"relay.enable");
+  cJSON* relay_status=cJSON_GetObjectItemCaseSensitive(param,"relay.status");
+
+  if(relay_enable!=NULL){
+    log_info("relay_enable: %s", relay_enable->valueint? "true":"false");
+    axk_relay_set(relay_enable->valueint);
+    emMCP_ResponseValue(relay_enable->valueint?"{\"relay.enable\":true}":"{\"relay.enable\":false}");
+  }
+
+  if(relay_status!=NULL){
+    emMCP_ResponseValue( axk_relay_get()?"{\"relay.status\":true}":"{\"relay.status\":false}");
+  }
+}
+
+static void sht3x_tool_callbark(void* arg) {
+  if(arg==NULL){
+    log_error("sht3x_tool_callbark arg is null");
+    return;
+  }
+  cJSON* param=(cJSON*)arg;
+  log_debug("sht3x_tool_callbark ");
+  cJSON* temprature_item=cJSON_GetObjectItemCaseSensitive(param,"sht3x.temprature");
+  cJSON* humidity_item=cJSON_GetObjectItemCaseSensitive(param,"sht3x.humidity");
+  if(temprature_item!=NULL||humidity_item!=NULL){
+    if(sht30_is_init){
+      char response[64];
+      snprintf(response, sizeof(response),
+               "{\"temperature\":%.1f,\"humidity\":%.1f}",temperature, humidity);
+      log_info("sht3x_tool_callbark response: %s", response);
+      emMCP_ResponseValue(response);
+    }
+    
+  }
+  else {
+    log_error("sht3x_tool_callbark read is null");
+  }
 }
 
 /* USER CODE END Application */
