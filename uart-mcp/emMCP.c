@@ -714,6 +714,11 @@ void emMCP_TickHandle(int delay_ms)
     emMCP_dev->isUartRecv = 0;                       // 重置接收标志
     emMCP_event = emMCP_EVENT_NONE;                  // 重置事件为无事件
     emMCP_free(uart_data_paramp);                    // 释放参数缓冲区内存
+    // 清零 UART 数据缓冲区，防止残留数据影响下次接收
+    if (uart_data_buf != NULL)
+    {
+      uart_data_buf[0] = '\0';
+    }
   }
 }
 /**

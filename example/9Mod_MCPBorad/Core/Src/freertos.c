@@ -192,28 +192,29 @@ void sht3x_read_task(void *argument) {
   } else {
     ch224_is_init = true;
     log_info("ch224 init OK!");
+      int ch224_status = axk_ch224_get_status(AXK_CH224_REG_STATUS);
+
+    if (ch224_status < 0) {
+      log_error("ch224 status error: %d", ch224_status);
+    } else
+      log_info("ch224 status: 0x%02X", ch224_status);
+
+    // // 设置CH224输出电压为5V
+    // ch224_status = axk_ch224_set_vout(AXK_CH224_VOUT_AVS);
+    ch224_status = axk_ch224_set_pps_vout(12.2);
+    if (ch224_status < 0) {
+      log_error("ch224 set avs vout error: %d", ch224_status);
+    } else
+      log_info("ch224 set avs vout OK!");
+    ch224_status = axk_ch224_set_mode(AXK_CH224_VOUT_PPS);
+    if (ch224_status < 0) {
+      log_error("ch224 set mode error: %d", ch224_status);
+    } else {
+      log_info("ch224 set mode OK!");
+    }
   }
   axk_relay_init();
-  int ch224_status = axk_ch224_get_status(AXK_CH224_REG_STATUS);
-
-  if (ch224_status < 0) {
-    log_error("ch224 status error: %d", ch224_status);
-  } else
-    log_info("ch224 status: 0x%02X", ch224_status);
-
-  // // 设置CH224输出电压为5V
-  // ch224_status = axk_ch224_set_vout(AXK_CH224_VOUT_AVS);
-  ch224_status = axk_ch224_set_pps_vout(12.2);
-  if (ch224_status < 0) {
-    log_error("ch224 set avs vout error: %d", ch224_status);
-  } else
-    log_info("ch224 set avs vout OK!");
-  ch224_status = axk_ch224_set_mode(AXK_CH224_VOUT_PPS);
-  if (ch224_status < 0) {
-    log_error("ch224 set mode error: %d", ch224_status);
-  } else {
-    log_info("ch224 set mode OK!");
-  }
+ 
   // 初始化WS2812灯条
 
   double temperature = 0.0;
@@ -266,8 +267,16 @@ void ws2812_modeTask(void *argument) {
 /* USER CODE BEGIN Application */
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
   if (huart == &huart2) {
+    // 确保接收到的数据以 null 结尾，防止 strlen 越界
+    if (Size < RXBUFFSER_MAX_SIZE) {
+      rxBuffer[Size] = '\0';
+    } else {
+      rxBuffer[RXBUFFSER_MAX_SIZE - 1] = '\0';
+    }
+    
     uartPortRecvData((char *)rxBuffer, Size);
 
+    // 重新启动 DMA 接收
     HAL_UARTEx_ReceiveToIdle_DMA(&huart2, rxBuffer, RXBUFFSER_MAX_SIZE);
     __HAL_DMA_DISABLE_IT(huart2.hdmarx, DMA_IT_HT);
   }
