@@ -748,7 +748,6 @@ void emMCP_TickHandle(int delay_ms)
   
   if (emMCP_dev->isUartRecv)
   { // 如果串口有数据接收
-<<<<<<< HEAD
     mcp_server_tool_type_t _param_type =
         MCP_SERVER_TOOL_TYPE_STRING;                   // 初始化参数类型
     char *uart_data_paramp = emMCP_malloc(256);        // 分配参数缓冲区内存
@@ -764,38 +763,6 @@ void emMCP_TickHandle(int delay_ms)
     {
       uart_data_buf[0] = '\0';
     }
-=======
-    mcp_server_tool_type_t _param_type = MCP_SERVER_TOOL_TYPE_STRING;
-    char *uart_data_paramp = emMCP_malloc(256);
-    if (uart_data_paramp == NULL)
-    {
-      emMCP_log_error("Failed to allocate memory for uart_data_paramp");
-      emMCP_dev->isUartRecv = 0;
-      return;
-    }
-    memset(uart_data_paramp, 0, 256);
-
-    g_emMCP_process_count++;
-    
-    emMCP_ReturnEvent(&_param_type, uart_data_paramp);
-    emMCP_dev->emMCPEventCallback(emMCP_event, _param_type, uart_data_paramp);
-
-    // 释放接收缓冲区
-    if (uart_data_buf != NULL)
-    {
-      emMCP_free(uart_data_buf);
-      uart_data_buf = NULL;
-    }
-
-    emMCP_dev->isUartRecv = 0;
-    emMCP_event = emMCP_EVENT_NONE;
-    emMCP_free(uart_data_paramp);
-  }
-  else
-  {
-    // 没有数据时延时，避免忙等待
-    emMCP_delay(delay_time);
->>>>>>> 233a362d6120803f3d0868f3d7697dc03de34952
   }
 }
 /**
