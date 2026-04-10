@@ -12,7 +12,6 @@
 #ifndef __UART_PORT_H__
 #define __UART_PORT_H__
 
-#include "emMCP.h"
 #include "stdbool.h"
 #include <stddef.h>
 
@@ -67,6 +66,8 @@ extern "C" {
         #define __EMMCP_CONFIG_INCLUDED__
     #endif
 #endif
+
+#include "emMCP.h"
 
 /**
  * @brief 默认实现声明

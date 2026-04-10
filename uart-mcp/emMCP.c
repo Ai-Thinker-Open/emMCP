@@ -223,9 +223,11 @@ int emMCP_AddToolToToolList(emMCP_tool_t *tool)
     tmp_tool->checkRequestHandler = emMCP_check_CMDCallback; // 设置默认的命令检查回调函数
 
   // 将工具信息存储到内存数组中
+  int tool_added = 0;
   if (mcp_tool_arry[0].name == NULL) // 检查工具数组是否为空
   {
     memcpy(&mcp_tool_arry[0], tmp_tool, sizeof(emMCP_tool_t)); // 复制到第一个位置
+    tool_added = 1;
   }
   else // 工具数组不为空
   {
@@ -235,9 +237,16 @@ int emMCP_AddToolToToolList(emMCP_tool_t *tool)
       if (mcp_tool_arry[i].name == NULL) // 找到空位置
       {
         memcpy(&mcp_tool_arry[i], tmp_tool, sizeof(emMCP_tool_t)); // 复制工具信息到空位置
+        tool_added = 1;
         break;
       }
     }
+  }
+  // 检查是否成功添加工具（数组已满）
+  if (!tool_added)
+  {
+    emMCP_log_error("Tool list is full, max %d tools", MCP_SERVER_TOOL_NUMBLE_MAX);
+    return -32604; // 工具列表已满
   }
 
   // 创建JSON格式的工具对象
@@ -491,12 +500,12 @@ int emMCP_CheckUartSendStatus(void)
  */
 int emMCP_RegistrationTools(void)
 { // 向AI设备注册工具
-  if (emMCP_dev->tools_root == NULL ||
-      emMCP_dev == NULL || // 检查设备及工具根对象是否有效
+  if (emMCP_dev == NULL ||
+      emMCP_dev->tools_root == NULL || // 检查设备及工具根对象是否有效
       emMCP_dev->tools_arry == NULL)
   {
-    emMCP_log_error("tools_root is NULL"); // 记录错误日志
-    return -1;                             // 返回错误码
+    emMCP_log_error("emMCP_dev or tools is NULL"); // 记录错误日志
+    return -1;                                     // 返回错误码
   }
   emMCP_dev->tools_str = cJSON_PrintUnformatted(emMCP_dev->tools_root);
   if (emMCP_dev->tools_str == NULL)
@@ -514,8 +523,15 @@ int emMCP_RegistrationTools(void)
   if (cmd != NULL)
   {
     memset(cmd, 0, cmd_buf_size);
-    snprintf(cmd, cmd_buf_size, "mcp-tool {\"role\":\"MCU\",\"msgType\":\"MCP\",\"data\":%s}\r\n", emMCP_dev->tools_str);
-    uartPortSendData(cmd, strlen(cmd));
+    int written = snprintf(cmd, cmd_buf_size, "mcp-tool {\"role\":\"MCU\",\"msgType\":\"MCP\",\"data\":%s}\r\n", emMCP_dev->tools_str);
+    if (written > 0 && written < cmd_buf_size)
+    { // 检查是否完整写入
+      uartPortSendData(cmd, strlen(cmd));
+    }
+    else
+    {
+      emMCP_log_error("Command buffer too small");
+    }
     emMCP_free(cmd);
   }
   else
@@ -686,22 +702,24 @@ static emMCP_event_t emMCP_ReturnEvent(
       return emMCP_EVENT_NONE; // 返回无事件
     }
   }
-  if (emMCP_event != emMCP_EVENT_NONE)
-  { // 如果有事件发生
+  if (emMCP_event != emMCP_EVENT_NONE && text_param != NULL)
+  { // 如果有事件发生且缓冲区有效
 
-    if (*param_type == MCP_SERVER_TOOL_TYPE_STRING)   // 如果参数类型为字符串
+    if (*param_type == MCP_SERVER_TOOL_TYPE_STRING && msgType_param != NULL && msgType_param->valuestring != NULL)
+    {                                                       // 如果参数类型为字符串
       strncpy(text_param, msgType_param->valuestring, 255); // 复制字符串值
-    else
+    }
+    else if (msgType_param != NULL)
     { // 否则
       char *param_str =
           cJSON_PrintUnformatted(msgType_param); // 将参数转为字符串
       if (param_str != NULL)
       {
-        strncpy(text_param, param_str, 255);       // 复制参数字符串
-        cJSON_free(param_str);                     // 释放参数字符串内存
+        strncpy(text_param, param_str, 255); // 复制参数字符串
+        cJSON_free(param_str);               // 释放参数字符串内存
       }
     }
-    text_param[255] = '\0';  // 确保字符串结束
+    text_param[255] = '\0'; // 确保字符串结束
   }
   cJSON_Delete(root); // 删除JSON对象
   return emMCP_event; // 返回事件类型
@@ -714,7 +732,10 @@ static emMCP_event_t emMCP_ReturnEvent(
  */
 void emMCP_UpdateUartRecv(bool isRecv)
 {
-  emMCP_dev->isUartRecv = isRecv;
+  if (emMCP_dev != NULL)
+  {
+    emMCP_dev->isUartRecv = isRecv;
+  }
 } // 更新串口接收状态标志
 
 /**
@@ -770,8 +791,15 @@ void emMCP_TickHandle(int delay_ms)
   if (emMCP_dev->isUartRecv)
   { // 如果串口有数据接收
     mcp_server_tool_type_t _param_type =
-        MCP_SERVER_TOOL_TYPE_STRING;                   // 初始化参数类型
-    char *uart_data_paramp = emMCP_malloc(256);        // 分配参数缓冲区内存
+        MCP_SERVER_TOOL_TYPE_STRING;            // 初始化参数类型
+    char *uart_data_paramp = emMCP_malloc(256); // 分配参数缓冲区内存
+    if (uart_data_paramp == NULL)
+    {                               // 检查内存分配是否成功
+      emMCP_log_error("Failed to allocate uart_data_paramp");
+      emMCP_dev->isUartRecv = 0;  // 重置接收标志
+      emMCP_event = emMCP_EVENT_NONE;
+      return;
+    }
     memset(uart_data_paramp, 0, 256);                  // 清零参数缓冲区
     emMCP_ReturnEvent(&_param_type, uart_data_paramp); // 解析串口数据并获取事件
     emMCP_dev->emMCPEventCallback(emMCP_event, _param_type,

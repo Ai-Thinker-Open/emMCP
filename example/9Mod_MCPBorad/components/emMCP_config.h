@@ -40,6 +40,16 @@ extern "C" {
 #define emMCP_delay     osDelay
 
 /* ========================================================================== */
+/* emMCP 工具配置                                                             */
+/* ========================================================================== */
+
+#define MCP_SERVER_TOOL_NUMBLE_MAX              2   // 工具数量（默认2，原4）
+#define MCP_SERVER_TOOL_PROPERTIES_NUM          4   // 属性数量（默认4，原6）
+#define MCP_SERVER_TOOL_METHODS_NUM             2   // 方法数量（默认2，原5）
+#define MCP_SERVER_TOOL_METHODS_PARAMETERS_NUM  3   // 方法参数数量（默认3，原5）
+
+
+/* ========================================================================== */
 /* 串口发送函数配置                                                           */
 /* ========================================================================== */
 #define emMCP_uart_send(data, len)  HAL_UART_Transmit(&huart2, (uint8_t*)(data), (len), HAL_MAX_DELAY)

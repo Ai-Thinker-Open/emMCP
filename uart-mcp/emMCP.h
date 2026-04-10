@@ -17,7 +17,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-#define emMCP_VERSION "1.0.0" // emMCP版本号
+#define emMCP_VERSION "1.0.1" // emMCP版本号
 
 // 内存优化：减少默认配置，用户可根据需要修改
 #ifndef MCP_SERVER_TOOL_NUMBLE_MAX
