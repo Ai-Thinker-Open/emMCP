@@ -78,11 +78,11 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 static void LED_ToolsRequestHandler(void *arg)
 {
   cJSON *param = (cJSON *)arg;
-  cJSON *led1 = cJSON_GetObjectItem(param, "led1");
-  cJSON *led2 = cJSON_GetObjectItem(param, "led2");
-  cJSON *led3 = cJSON_GetObjectItem(param, "led3");
-  cJSON *led4 = cJSON_GetObjectItem(param, "led4");
-  cJSON *led_all = cJSON_GetObjectItem(param, "led_all");
+  cJSON *led1 = cJSON_GetObjectItemCaseSensitive(param, "led1");
+  cJSON *led2 = cJSON_GetObjectItemCaseSensitive(param, "led2");
+  cJSON *led3 = cJSON_GetObjectItemCaseSensitive(param, "led3");
+  cJSON *led4 = cJSON_GetObjectItemCaseSensitive(param, "led4");
+  cJSON *led_all = cJSON_GetObjectItemCaseSensitive(param, "led_all");
 
   if (led1 != NULL)
   {

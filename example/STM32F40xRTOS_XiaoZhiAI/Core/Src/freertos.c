@@ -132,7 +132,7 @@ void MX_FREERTOS_Init(void) {
  */
 static void ws2812_tool_set_request_handler(void *arg) {
   cJSON *root = (cJSON *)arg;
-  cJSON *ws2812_enabled_item = cJSON_GetObjectItem(root, "ws2812_enabled");
+  cJSON *ws2812_enabled_item = cJSON_GetObjectItemCaseSensitive(root, "ws2812_enabled");
   if (ws2812_enabled_item != NULL) {
     ws2812_set_all_pixels_color(
         ws2812_strip.dev->color.r, ws2812_strip.dev->color.g,
@@ -156,9 +156,9 @@ static void ws2812_tool_check_request_handler(void *arg) {
 
 static void ws2812_tool_set_color_request_handler(void *arg) {
   cJSON *root = (cJSON *)arg;
-  cJSON *red_item = cJSON_GetObjectItem(root, "red");
-  cJSON *green_item = cJSON_GetObjectItem(root, "green");
-  cJSON *blue_item = cJSON_GetObjectItem(root, "blue");
+  cJSON *red_item = cJSON_GetObjectItemCaseSensitive(root, "red");
+  cJSON *green_item = cJSON_GetObjectItemCaseSensitive(root, "green");
+  cJSON *blue_item = cJSON_GetObjectItemCaseSensitive(root, "blue");
 
   if (red_item != NULL && green_item != NULL && blue_item != NULL) {
     ws2812_strip.dev->color.r = red_item->valueint;
@@ -166,7 +166,7 @@ static void ws2812_tool_set_color_request_handler(void *arg) {
     ws2812_strip.dev->color.b = blue_item->valueint;
   }
 
-  cJSON *led_id = cJSON_GetObjectItem(root, "led_id");
+  cJSON *led_id = cJSON_GetObjectItemCaseSensitive(root, "led_id");
   if (led_id != NULL) {
     if (led_id->valueint == -1) {
       ws2812_set_all_pixels_color(
@@ -195,7 +195,7 @@ static void ws2812_tool_check_color_request_handler(void *arg) {
 
 static void ws2812_tool_set_brightness_request_handler(void *arg) {
   cJSON *root = (cJSON *)arg;
-  cJSON *brightness_item = cJSON_GetObjectItem(root, "set_brightness");
+  cJSON *brightness_item = cJSON_GetObjectItemCaseSensitive(root, "set_brightness");
   if (brightness_item != NULL) {
     enbaled = true;
     float brightness = brightness_item->valuedouble / 100.0f;

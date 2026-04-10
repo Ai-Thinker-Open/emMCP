@@ -72,10 +72,10 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
 /* USER CODE BEGIN 0 */
 void emMCP_SetRGBHandler(void *arg) {
     cJSON *param = (cJSON *)arg;
-    cJSON *enable = cJSON_GetObjectItem(param, "enable");
-    cJSON *ch_red = cJSON_GetObjectItem(param, "red");
-    cJSON *ch_green = cJSON_GetObjectItem(param, "green");
-    cJSON *ch_blue = cJSON_GetObjectItem(param, "blue");
+    cJSON *enable = cJSON_GetObjectItemCaseSensitive(param, "enable");
+    cJSON *ch_red = cJSON_GetObjectItemCaseSensitive(param, "red");
+    cJSON *ch_green = cJSON_GetObjectItemCaseSensitive(param, "green");
+    cJSON *ch_blue = cJSON_GetObjectItemCaseSensitive(param, "blue");
     if (enable != NULL) {
         if (cJSON_IsTrue(enable)) {
             log_info("RGB enable is true");

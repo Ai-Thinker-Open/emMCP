@@ -92,10 +92,10 @@ void emMCP_EventCallback(emMCP_event_t event, mcp_server_tool_type_t type,
   switch (event) {
   case emMCP_EVENT_AI_MCP_Text: {
     cJSON *Text_root = cJSON_Parse(param_str);
-    cJSON *state = cJSON_GetObjectItem(Text_root, "state");
+    cJSON *state = cJSON_GetObjectItemCaseSensitive(Text_root, "state");
     if (state->valueint) {
       memset(long_text, 0, 128);
-      cJSON *text = cJSON_GetObjectItem(Text_root, "text");
+      cJSON *text = cJSON_GetObjectItemCaseSensitive(Text_root, "text");
       if (text != NULL) {
         strcpy(long_text, text->valuestring);
         // 判断是否在播放音乐
@@ -106,7 +106,7 @@ void emMCP_EventCallback(emMCP_event_t event, mcp_server_tool_type_t type,
         }
       }
       // 解析心情
-      cJSON *emotion = cJSON_GetObjectItem(Text_root, "emotion");
+      cJSON *emotion = cJSON_GetObjectItemCaseSensitive(Text_root, "emotion");
       if (emotion != NULL) {
         if (strcmp(emotion->valuestring, "happy") == 0) {
           current_emotion = current_emotion == U8G2_EMOTION_MUSIC

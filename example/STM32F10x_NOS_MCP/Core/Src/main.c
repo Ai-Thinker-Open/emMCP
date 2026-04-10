@@ -67,7 +67,7 @@ static void emMCP_SetLEDHandler(void *arg) {
   // 接收到的数据
   cJSON *param = (cJSON *)arg;
   // 控制LED灯
-  cJSON *enable = cJSON_GetObjectItem(param, "enable");
+  cJSON *enable = cJSON_GetObjectItemCaseSensitive(param, "enable");
   if (enable != NULL) {
     if (enable->valueint == 1) {
       HAL_GPIO_WritePin(RELA_GPIO_Port, RELA_Pin, GPIO_PIN_RESET);
