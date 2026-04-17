@@ -664,6 +664,8 @@ static emMCP_event_t emMCP_ReturnEvent(
                                 msgType_param); // 响应工具请求
     //   }
     // }
+    cJSON_Delete(root);
+    return emMCP_EVENT_NONE; // 已内部处理，不触发 EventCallback
   }
   else if (msgType != NULL && strcmp(msgType->valuestring, "mcp_check") == 0)
   {                                               // 如果是MCP检查消息
@@ -688,6 +690,8 @@ static emMCP_event_t emMCP_ReturnEvent(
     // 处理MCP检查工具请求
     emMCP_ResponsiveToolRequest(mcp_toolsname->valuestring,
                                 msgType_param); // 响应工具请求
+    cJSON_Delete(root);
+    return emMCP_EVENT_NONE; // 已内部处理，不触发 EventCallback
   }
   else if (msgType != NULL && strcmp(msgType->valuestring, "MCP Text") == 0)
   {                                          // 如果是MCP文本消息
