@@ -61,6 +61,36 @@ target_link_libraries(your_project_name
 
 You need to create your own `emMCP_config.h` file (see [emMCP configuration example](./example/STM32F10xRTOS_MCP/emMCP/emMCP_config.h)).
 
+#### What is `emMCP_config.h`?
+
+`emMCP_config.h` is a port configuration file that maps emMCP's abstract interfaces to your platform-specific implementations. You **must** define the following macros:
+
+| Macro | Description | Example |
+|-------|-------------|---------|
+| `emMCP_printf` | Log/print function | `printf`, `log_printf` |
+| `emMCP_malloc` | Memory allocation function | `malloc`, `pvPortMalloc` |
+| `emMCP_free` | Memory deallocation function | `free`, `vPortFree` |
+| `emMCP_delay` | Delay function (milliseconds) | `HAL_Delay`, `osDelay` |
+
+A minimal example:
+
+```c
+#ifndef __EMMCP_CONFIG_H__
+#define __EMMCP_CONFIG_H__
+
+#include <stdio.h>
+#include <stdlib.h>
+
+#define emMCP_printf    printf
+#define emMCP_malloc    malloc
+#define emMCP_free      free
+#define emMCP_delay     HAL_Delay
+
+#endif
+```
+
+> A complete template is available at [port/emMCP_port_config_template.h](./port/emMCP_port_config_template.h).
+
 > The example provides a CMake example for STM32F103 ([STM32F10xRTOS_MCP](./example/STM32F10xRTOS_MCP)), which uses this CMake subdirectory method.
 
 ### 3. Porting Interface

@@ -61,6 +61,36 @@ target_link_libraries(your_project_name
 
 你需要创建自己的 `emMCP_config.h` 文件（参考 [emMCP 配置示例](./example/STM32F10xRTOS_MCP/emMCP/emMCP_config.h)）。
 
+#### `emMCP_config.h` 的作用是什么？
+
+`emMCP_config.h` 是端口配置文件，用于将 emMCP 的抽象接口映射到你平台的具体实现。你**必须**定义以下宏：
+
+| 宏定义 | 说明 | 示例 |
+|--------|------|------|
+| `emMCP_printf` | 日志打印函数 | `printf`、`log_printf` |
+| `emMCP_malloc` | 内存分配函数 | `malloc`、`pvPortMalloc` |
+| `emMCP_free` | 内存释放函数 | `free`、`vPortFree` |
+| `emMCP_delay` | 延时函数（毫秒） | `HAL_Delay`、`osDelay` |
+
+一个最简示例：
+
+```c
+#ifndef __EMMCP_CONFIG_H__
+#define __EMMCP_CONFIG_H__
+
+#include <stdio.h>
+#include <stdlib.h>
+
+#define emMCP_printf    printf
+#define emMCP_malloc    malloc
+#define emMCP_free      free
+#define emMCP_delay     HAL_Delay
+
+#endif
+```
+
+> 完整的模板文件可在 [port/emMCP_port_config_template.h](./port/emMCP_port_config_template.h) 查看。
+
 > 示例中提供了 STM32F103 的 CMake 示例（[STM32F10xRTOS_MCP](./example/STM32F10xRTOS_MCP)），它使用了这种 CMake 子目录引用方式。
 
 ### 3. 移植接口
