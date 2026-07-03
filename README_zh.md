@@ -39,9 +39,29 @@ emMCP (Easy mcu MCP) 是一个用于快速开发基于 [小安AI UART-MCP](https
 git clone https://github.com/Ai-Thinker-Open/emMCP.git
 ```
 ### 2. 在项目中引入 emMCP 库
+
+有两种方式将 emMCP 集成到你的项目中：
+
+#### 方法一：文件复制（推荐独立项目使用）
 将 [port](./port) 和 [uart-mcp](./uart-mcp) 文件夹复制到你的项目当中，并引用 `emMCP.h` 文件使用 **emMCP** 的所有资源。
 
->示例中提供了 STM32F103 的 CMake 示例（[STM32F10xRTOS_MCP](./example/STM32F10xRTOS_MCP)），你可以参考它来配置你的项目。
+#### 方法二：CMake 子目录引用（适用于同一仓库内的项目）
+如果你的项目与 emMCP 在同一仓库中，可以使用 CMake 的 `add_subdirectory` 直接引用库：
+
+```cmake
+# 在你的 CMakeLists.txt 中
+set(EMCP_USER_CONFIG_FILE ${CMAKE_CURRENT_SOURCE_DIR}/path/to/your/emMCP_config.h)
+add_subdirectory(path/to/emMCP emMCP)
+
+# 链接库
+target_link_libraries(your_project_name
+    emMCP
+)
+```
+
+你需要创建自己的 `emMCP_config.h` 文件（参考 [emMCP 配置示例](./example/STM32F10xRTOS_MCP/emMCP/emMCP_config.h)）。
+
+> 示例中提供了 STM32F103 的 CMake 示例（[STM32F10xRTOS_MCP](./example/STM32F10xRTOS_MCP)），它使用了这种 CMake 子目录引用方式。
 
 ### 3. 移植接口
 

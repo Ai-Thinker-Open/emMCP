@@ -39,9 +39,29 @@ git clone https://github.com/Ai-Thinker-Open/emMCP.git
 ```
 
 ### 2. Import emMCP Library into Your Project
+
+There are two ways to integrate emMCP into your project:
+
+#### Method 1: File Copy (Recommended for standalone projects)
 Copy the [port](./port) and [uart-mcp](./uart-mcp) folders to your project, and include the `emMCP.h` file to use all resources of **emMCP**.
 
-> The example provides a CMake example for STM32F103 ([STM32F10xRTOS_MCP](./example/STM32F10xRTOS_MCP)), which you can refer to configure your project.
+#### Method 2: CMake Subdirectory (For projects within the same repository)
+If your project is in the same repository as emMCP, you can use CMake's `add_subdirectory` to reference the library directly:
+
+```cmake
+# In your CMakeLists.txt
+set(EMCP_USER_CONFIG_FILE ${CMAKE_CURRENT_SOURCE_DIR}/path/to/your/emMCP_config.h)
+add_subdirectory(path/to/emMCP emMCP)
+
+# Link the library
+target_link_libraries(your_project_name
+    emMCP
+)
+```
+
+You need to create your own `emMCP_config.h` file (see [emMCP configuration example](./example/STM32F10xRTOS_MCP/emMCP/emMCP_config.h)).
+
+> The example provides a CMake example for STM32F103 ([STM32F10xRTOS_MCP](./example/STM32F10xRTOS_MCP)), which uses this CMake subdirectory method.
 
 ### 3. Porting Interface
 
